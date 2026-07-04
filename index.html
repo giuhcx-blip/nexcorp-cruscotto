@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nexcorp — Cruscotto Direttivo</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root {
+  --bg:#F5F4F0;--surface:#FFFFFF;--surface2:#EEEDE8;--border:#E0DED6;
+  --text:#1A1917;--text2:#6B6960;--text3:#9B9990;
+  --green:#1A6B45;--green-bg:#E8F5EE;--green-border:#B6DECA;
+  --red:#B02A2A;--red-bg:#FBEAEA;--red-border:#F2C4C4;
+  --amber:#92520A;--amber-bg:#FEF3E2;--amber-border:#F5D9AA;
+  --blue:#1A3F7A;--blue-bg:#E8EFF8;--blue-border:#B8CCE8;
+  --accent:#2B5CE6;--accent-bg:#EEF2FD;
+  --radius:10px;--radius-lg:14px;--sidebar:210px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:200;background:var(--text);color:#fff;height:50px;display:flex;align-items:center;justify-content:space-between;padding:0 20px}
+.topbar-brand{font-size:14px;font-weight:600;letter-spacing:.04em}
+.topbar-brand span{opacity:.45;font-weight:400;margin-left:8px;font-size:13px}
+.topbar-right{display:flex;align-items:center;gap:16px}
+.period-display{font-size:12px;opacity:.55;font-variant-numeric:tabular-nums}
+.pdf-btn{padding:6px 14px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:12px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.pdf-btn:hover{opacity:.85}
+
+/* LAYOUT */
+.layout{display:flex;min-height:calc(100vh - 50px)}
+.sidebar{width:var(--sidebar);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);padding:16px 0;position:sticky;top:50px;height:calc(100vh - 50px);overflow-y:auto}
+.nav-group{margin-bottom:4px}
+.nav-label{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);padding:12px 16px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 16px;font-size:13px;color:var(--text2);cursor:pointer;border-left:2px solid transparent;transition:all .12s;user-select:none}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:var(--accent-bg);font-weight:500}
+.nav-icon{font-size:14px;width:18px;text-align:center;flex-shrink:0}
+.main{flex:1;padding:24px 28px;min-width:0;max-width:1080px}
+
+/* PERIOD BAR */
+.period-bar{display:flex;align-items:center;gap:10px;margin-bottom:22px;flex-wrap:wrap}
+.period-bar label{font-size:12px;color:var(--text2)}
+.period-bar select{font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--text);cursor:pointer}
+.period-label{font-size:17px;font-weight:500;color:var(--text);margin-left:4px}
+
+/* SECTION HEADER */
+.sec-hdr{font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--text3);margin:24px 0 10px}
+.sec-hdr:first-child{margin-top:0}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px}
+.kpi-lbl{font-size:11px;color:var(--text2);margin-bottom:5px}
+.kpi-val{font-size:22px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+.kpi-val.pos{color:var(--green)}
+.kpi-val.neg{color:var(--red)}
+.kpi-val.warn{color:var(--amber)}
+.kpi-sub{font-size:11px;color:var(--text3);margin-top:3px}
+
+/* SEMAFORI */
+.sem-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin-bottom:20px}
+.sem{border-radius:var(--radius);padding:10px 12px;border:1px solid}
+.sem.g{background:var(--green-bg);border-color:var(--green-border)}
+.sem.r{background:var(--red-bg);border-color:var(--red-border)}
+.sem.y{background:var(--amber-bg);border-color:var(--amber-border)}
+.sem-lbl{font-size:10px;color:var(--text2);margin-bottom:3px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.sem-val{font-size:12px;font-weight:600}
+.sem.g .sem-val{color:var(--green)}
+.sem.r .sem-val{color:var(--red)}
+.sem.y .sem-val{color:var(--amber)}
+
+/* UNIT CARDS */
+.unit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:8px}
+.unit-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px}
+.unit-name{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--text3);margin-bottom:5px}
+.unit-rev{font-size:17px;font-weight:500;font-variant-numeric:tabular-nums}
+.unit-mol{font-size:11px;margin-top:3px}
+.unit-mol.pos{color:var(--green)}
+.unit-mol.neg{color:var(--red)}
+
+/* FORM */
+.form-block{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;margin-bottom:14px}
+.form-block-hdr{background:var(--text);color:#fff;padding:10px 16px;font-size:12px;font-weight:600;letter-spacing:.04em;display:flex;justify-content:space-between;align-items:center}
+.form-table{width:100%;border-collapse:collapse}
+.form-table th{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);padding:8px 10px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:right}
+.form-table th:first-child{text-align:left;min-width:170px}
+.form-table td{border-bottom:1px solid var(--border);padding:0;vertical-align:middle}
+.form-table tr:last-child td{border-bottom:none}
+.form-table td.row-lbl{padding:9px 10px;font-size:13px;background:var(--surface);min-width:170px}
+.form-table td.row-lbl small{display:block;font-size:10px;color:var(--text3);margin-top:1px}
+.form-table td.row-tot{padding:9px 10px;font-size:12px;font-weight:600;background:var(--surface2);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.num-in{width:100%;height:40px;border:none;border-right:1px solid var(--border);background:var(--surface);color:var(--text);font-size:13px;text-align:right;padding:0 8px;font-variant-numeric:tabular-nums;outline:none;transition:background .1s}
+.num-in:focus{background:var(--accent-bg)}
+.num-in.special{background:#FFFBF0}
+.num-in:disabled{background:var(--surface2);color:var(--text3);cursor:not-allowed;font-size:11px}
+.save-bar{display:flex;align-items:center;gap:12px;margin-bottom:20px}
+.save-btn{padding:8px 22px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;transition:opacity .15s}
+.save-btn:hover{opacity:.85}
+.save-ok{font-size:12px;color:var(--green);display:none}
+
+/* TABLES */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);padding:8px 10px;background:var(--surface2);border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+.data-table th:first-child{text-align:left}
+.data-table td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.data-table td:first-child{text-align:left}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr.sub td{background:var(--surface2);font-weight:600}
+.data-table tr.sub-green td{background:var(--green-bg);font-weight:600}
+.data-table tr.sub-red td{background:var(--red-bg);font-weight:600}
+.data-table tr.sub-blue td{background:var(--blue-bg);font-weight:600}
+.data-table tr.total td{background:var(--text);color:#fff;font-weight:600}
+
+/* PILL */
+.pill{display:inline-block;padding:2px 7px;border-radius:20px;font-size:11px;font-weight:600}
+.pill.d{background:var(--red-bg);color:var(--red)}
+.pill.c{background:var(--green-bg);color:var(--green)}
+.pill.n{background:var(--surface2);color:var(--text3)}
+
+/* CHART */
+.chart-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;margin-bottom:14px}
+.chart-title{font-size:12px;font-weight:500;color:var(--text2);margin-bottom:14px}
+
+/* NOTE */
+.note-area{width:100%;min-height:72px;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius);font-family:inherit;font-size:13px;color:var(--text);background:var(--surface);resize:vertical}
+.note-area:focus{outline:2px solid var(--accent);border-color:transparent}
+
+/* PAGE */
+.page{display:none}
+.page.active{display:block}
+
+/* FISCAL NOTICE */
+.fiscal-notice{background:var(--amber-bg);border:1px solid var(--amber-border);border-left:3px solid var(--amber);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--amber);margin-bottom:16px;line-height:1.6}
+
+/* MOBILE */
+.mob-nav{display:none;background:var(--surface);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;padding:6px 0 10px;z-index:200;justify-content:space-around}
+@media(max-width:680px){
+  .sidebar{display:none}
+  .mob-nav{display:flex}
+  .main{padding:16px 14px 80px}
+  .kpi-val{font-size:18px}
+  .form-table th:not(:first-child):not(:last-child){display:none}
+}
+.mob-btn{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9px;color:var(--text2);cursor:pointer;padding:4px 8px}
+.mob-btn.active{color:var(--accent)}
+.mob-icon{font-size:18px}
+
+/* UNIT FILTER */
+.uf-bar{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px;align-items:center;overflow-x:auto;padding-bottom:2px}
+.uf-lbl{font-size:10px;color:var(--text3);font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-right:2px;flex-shrink:0}
+.uf-btn{padding:3px 8px;border:1px solid var(--border);border-radius:14px;background:var(--surface);color:var(--text2);font-size:10px;cursor:pointer;transition:all .12s;white-space:nowrap;flex-shrink:0}
+.uf-btn:hover{border-color:var(--accent);color:var(--accent)}
+.uf-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+/* MONTH SELECTOR HIGHLIGHT */
+#sel-mese option.current{font-weight:700;color:var(--accent)}
+
+/* PRINT */
+@media print{
+  .topbar .pdf-btn,.sidebar,.mob-nav,.period-bar,.save-bar{display:none!important}
+  .layout{display:block}
+  .main{padding:0;max-width:100%}
+  .page{display:block!important}
+  .page:not(.active){display:none!important}
+  body{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-brand">Nexcorp <span>Cruscotto Direttivo</span></div>
+  <div class="topbar-right">
+    <select id="sel-anno" style="font-size:12px;padding:3px 6px;border:1px solid #555;border-radius:4px;background:#333;color:#fff;cursor:pointer"><option>2024</option><option>2025</option><option selected>2026</option><option>2027</option></select>
+    <select id="sel-mese" style="font-size:12px;padding:3px 6px;border:1px solid #555;border-radius:4px;background:#333;color:#fff;cursor:pointer">
+      <option value="0">Gen</option><option value="1">Feb</option><option value="2">Mar</option>
+      <option value="3">Apr</option><option value="4">Mag</option><option value="5">Giu</option>
+      <option value="6">Lug</option><option value="7">Ago</option><option value="8">Set</option>
+      <option value="9">Ott</option><option value="10">Nov</option><option value="11">Dic</option>
+    </select>
+    <div class="period-display" id="tb-period"></div>
+    <span id="sync-badge" style="font-size:11px;opacity:.7;cursor:pointer" onclick="syncNow()" title="Sincronizza"></span>
+    <button class="pdf-btn" onclick="exportPDF()">⬇ PDF</button>
+  </div>
+</div>
+
+<div class="layout">
+<nav class="sidebar">
+  <div class="nav-group">
+    <div class="nav-label">Panoramica</div>
+    <div class="nav-item active" onclick="go('riepilogo',this)"><span class="nav-icon">◉</span>Riepilogo</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Inserimento</div>
+    <div class="nav-item" onclick="go('dati',this)"><span class="nav-icon">✎</span>Dati mensili</div>
+  </div>
+  <div class="nav-group">
+    <div class="nav-label">Analisi</div>
+    <div class="nav-item" onclick="go('iva',this)"><span class="nav-icon">△</span>IVA</div>
+    <div class="nav-item" onclick="go('ce',this)"><span class="nav-icon">▤</span>Conto economico</div>
+    <div class="nav-item" onclick="go('cf',this)"><span class="nav-icon">⇄</span>Cash flow</div>
+    <div class="nav-item" onclick="go('annuale',this)"><span class="nav-icon">↗</span>Andamento annuale</div>
+  </div>
+</nav>
+
+<main class="main">
+
+<!-- ══ RIEPILOGO ══ -->
+<div class="page active" id="page-riepilogo">
+  <div class="sec-hdr">KPI del mese</div>
+  <div class="kpi-grid" id="kpi-main"></div>
+  <div class="sec-hdr">Costi — fissi vs variabili</div>
+  <div class="kpi-grid" id="kpi-costi"></div>
+  <div id="costi-bar" style="margin-bottom:18px"></div>
+  <div class="sec-hdr">Semafori di allerta</div>
+  <div class="sem-grid" id="semafori"></div>
+  <div class="sec-hdr">Ricavi per società</div>
+  <div class="unit-grid" id="unit-cards"></div>
+  <div class="sec-hdr" style="margin-top:20px">Note del mese</div>
+  <textarea class="note-area" id="note-area" placeholder="Annotazioni, promemoria, cose da verificare col commercialista..."></textarea>
+
+  <!-- RIEPILOGO ANNUALE -->
+  <div class="sec-hdr" style="margin-top:28px;font-size:11px;color:var(--accent)">━━ RIEPILOGO ANNUALE <span id="ann-year-label"></span> ━━</div>
+  <div class="kpi-grid" id="kpi-ann-main"></div>
+  <div class="sec-hdr">Ricavi per società — anno completo</div>
+  <div class="unit-grid" id="unit-cards-ann"></div>
+  <div class="sec-hdr">Andamento mensile — anno completo</div>
+  <div class="chart-wrap" style="margin-top:8px">
+    <div class="chart-title">Ricavi · Costi · MOL per mese <span id="ann-data-note" style="font-weight:400;color:var(--amber);font-size:11px"></span></div>
+    <div style="position:relative;height:220px"><canvas id="chart-ann-riepilogo"></canvas></div>
+  </div>
+</div>
+
+<!-- ══ DATI MENSILI ══ -->
+<div class="page" id="page-dati">
+  <div class="save-bar">
+    <span style="font-size:15px;font-weight:500;color:var(--accent)" id="dati-period"></span>
+    <button class="save-btn" onclick="saveAll()">Salva tutto</button>
+    <span class="save-ok" id="save-ok">✓ Salvato</span>
+  </div>
+
+  <!-- GESTIONE DATI -->
+  <div class="form-block" style="margin-bottom:16px">
+    <div class="form-block-hdr">Gestione dati</div>
+    <div style="padding:12px 16px;display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+      <button class="save-btn" style="font-size:12px;padding:6px 14px;background:var(--green)" onclick="backupData()">⬇ Backup (JSON)</button>
+      <label class="save-btn" style="font-size:12px;padding:6px 14px;background:var(--blue);cursor:pointer;margin:0">⬆ Ripristina backup<input type="file" accept=".json,application/json" style="display:none" onchange="restoreData(this)"></label>
+      <span style="width:1px;height:22px;background:var(--border)"></span>
+      <button class="save-btn" style="font-size:12px;padding:6px 14px;background:var(--surface2);color:var(--text)" onclick="downloadCSVTemplate()">⬇ Template CSV</button>
+      <label class="save-btn" style="font-size:12px;padding:6px 14px;background:var(--accent);cursor:pointer;margin:0">⬆ Importa CSV<input type="file" accept=".csv,text/csv" style="display:none" onchange="importCSV(this)"></label>
+      <span style="width:1px;height:22px;background:var(--border)"></span>
+      <button class="save-btn" id="demo-btn" style="font-size:12px;padding:6px 14px" onclick="toggleDemo()"></button>
+      <span id="tools-status" style="font-size:12px;color:var(--text2);font-weight:500"></span>
+    </div>
+    <div style="padding:0 16px 12px;font-size:11px;color:var(--text3);line-height:1.7">
+      <strong>Backup</strong>: salva tutti i dati in un file da conservare (i dati vivono solo nel browser).<br>
+      <strong>Template CSV</strong>: scarica il foglio dell'anno selezionato, riempi i numeri, poi <strong>Importa CSV</strong>.<br>
+      <strong>Dati demo</strong>: tienilo su OFF quando inserisci dati reali — così le celle vuote valgono 0.
+    </div>
+  </div>
+
+  <!-- SINCRONIZZAZIONE CLOUD -->
+  <div class="form-block" style="margin-bottom:16px">
+    <div class="form-block-hdr">Sincronizzazione cloud (Google Sheet)</div>
+    <div style="padding:12px 16px">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:8px">
+        <input id="sync-url" placeholder="URL web app (…/exec)" style="flex:1;min-width:240px;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
+        <input id="sync-token" placeholder="Token" style="width:180px;font-size:12px;padding:7px 10px;border:1px solid var(--border);border-radius:8px">
+        <button class="save-btn" style="font-size:12px;padding:7px 14px" onclick="syncSaveConfig()">Salva</button>
+        <button class="save-btn" style="font-size:12px;padding:7px 14px;background:var(--green)" onclick="syncNow()">⟳ Sincronizza ora</button>
+        <label style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px"><input type="checkbox" id="sync-auto" onchange="syncSaveConfig()"> Auto</label>
+        <span id="sync-status" style="font-size:12px;color:var(--text2);font-weight:500"></span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.7">
+        Sincronizza i dati con un Google Sheet condiviso, così li vedi uguali su telefono e computer. Serve una volta sola: crea il foglio, incolla lo script <code>GoogleSheet_AppsScript.gs</code>, pubblica come app web e incolla qui URL + token. Con <strong>Auto</strong> attivo, all'apertura carica dal cloud e a ogni modifica salva.
+      </div>
+    </div>
+  </div>
+
+  <div id="form-container"></div>
+
+  <!-- DETTAGLIO FORNITORI — verifica -->
+  <div class="form-block" style="margin-top:16px">
+    <div class="form-block-hdr">Dettaglio fornitori — verifica una voce di costo</div>
+    <div style="padding:12px 16px">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px">
+        <label style="font-size:12px;color:var(--text2)">Società</label>
+        <select id="det-soc" onchange="renderDet()" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface)"></select>
+        <label style="font-size:12px;color:var(--text2);margin-left:6px">Voce</label>
+        <select id="det-cat" onchange="renderDet()" style="font-size:13px;padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--surface)"></select>
+        <button class="save-btn" style="font-size:12px;padding:6px 12px" onclick="detAddRow()">+ Fornitore</button>
+      </div>
+      <div id="det-rows"></div>
+      <div id="det-summary" style="margin-top:12px"></div>
+    </div>
+    <div style="padding:0 16px 12px;font-size:11px;color:var(--text3);line-height:1.7">
+      Elenca i singoli fornitori di una voce (es. materie prime: fornitore con fattura, contanti, acquisti Cina…). La somma viene confrontata col totale inserito nel form sopra — utile per verificare o completare i dati.
+    </div>
+  </div>
+</div>
+
+<!-- ══ IVA ══ -->
+<div class="page" id="page-iva">
+  <div class="fiscal-notice">
+    <strong>Note fiscali:</strong><br>
+    WINGSUP → regime speciale del margine (art. 74-ter DPR 633/72) — IVA non esposta in fattura<br>
+    EIGHT DAYS → prestazioni sanitarie esenti IVA (art. 10 DPR 633/72)<br>
+    LUNGARNO → regime IVA da confermare col commercialista (esenzione o opzione 22%)
+  </div>
+  <div class="uf-bar" id="uf-iva"></div>
+  <div class="chart-wrap" style="overflow-x:auto"><table class="data-table" id="iva-table"></table></div>
+  <div class="kpi-grid" id="kpi-iva"></div>
+  <div class="sec-hdr">In sintesi — quanto devo all'Erario?</div>
+  <div id="iva-summary" style="display:flex;gap:12px;flex-wrap:wrap"></div>
+</div>
+
+<!-- ══ CONTO ECONOMICO ══ -->
+<div class="page" id="page-ce">
+  <div class="uf-bar" id="uf-ce"></div>
+  <div class="kpi-grid" id="kpi-ce"></div>
+  <div class="chart-wrap" style="overflow-x:auto;margin-bottom:14px"><table class="data-table" id="ce-table"></table></div>
+  <div class="chart-wrap">
+    <div class="chart-title" id="ce-chart-title">Ricavi · Costi · MOL per società</div>
+    <div style="position:relative;height:250px"><canvas id="chart-ce"></canvas></div>
+  </div>
+  <div class="sec-hdr">Dettaglio costi per fornitore</div>
+  <div id="ce-fornitori"></div>
+</div>
+
+<!-- ══ CASH FLOW ══ -->
+<div class="page" id="page-cf">
+  <div class="uf-bar" id="uf-cf"></div>
+  <div class="kpi-grid" id="kpi-cf"></div>
+  <div class="sec-hdr">Controllo cassa — contante da versare</div>
+  <div class="kpi-grid" id="kpi-cassa"></div>
+  <div class="chart-wrap" style="overflow-x:auto"><table class="data-table" id="cf-table"></table></div>
+  <div class="chart-wrap" style="margin-top:14px">
+    <div class="chart-title" id="cf-chart-title">Cash flow mensile per unità</div>
+    <div style="position:relative;height:220px"><canvas id="chart-cf"></canvas></div>
+  </div>
+  <div class="sec-hdr">Previsione cassa — 12 mesi</div>
+  <div class="kpi-grid" id="kpi-prev"></div>
+  <div class="chart-wrap">
+    <div class="chart-title">Saldo banca previsto <span style="font-weight:400;color:var(--text3)">— linea piena = reale · tratteggio = previsione (media mesi con dati)</span></div>
+    <div style="position:relative;height:220px"><canvas id="chart-prev"></canvas></div>
+  </div>
+</div>
+
+<!-- ══ ANNUALE ══ -->
+<div class="page" id="page-annuale">
+  <div class="uf-bar" id="uf-ann"></div>
+  <div class="chart-wrap">
+    <div class="chart-title" id="ann-chart-title">Ricavi vs Costi — tutti i mesi</div>
+    <div style="position:relative;height:260px"><canvas id="chart-ann"></canvas></div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title" id="ann-mol-title">MOL mensile</div>
+    <div style="position:relative;height:190px"><canvas id="chart-mol"></canvas></div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title">IVA — saldo mensile (rosso = debito, verde = credito)</div>
+    <div style="position:relative;height:190px"><canvas id="chart-iva-ann"></canvas></div>
+  </div>
+  <div class="chart-wrap">
+    <div class="chart-title" id="ann-cf-title">Cash flow netto mensile</div>
+    <div style="position:relative;height:190px"><canvas id="chart-cf-ann"></canvas></div>
+  </div>
+</div>
+
+</main>
+</div>
+
+<!-- MOBILE NAV -->
+<nav class="mob-nav">
+  <div class="mob-btn active" onclick="go('riepilogo',this)" data-mob><span class="mob-icon">◉</span>Home</div>
+  <div class="mob-btn" onclick="go('dati',this)" data-mob><span class="mob-icon">✎</span>Dati</div>
+  <div class="mob-btn" onclick="go('iva',this)" data-mob><span class="mob-icon">△</span>IVA</div>
+  <div class="mob-btn" onclick="go('ce',this)" data-mob><span class="mob-icon">▤</span>CE</div>
+  <div class="mob-btn" onclick="go('cf',this)" data-mob><span class="mob-icon">⇄</span>CF</div>
+  <div class="mob-btn" onclick="go('annuale',this)" data-mob><span class="mob-icon">↗</span>Anno</div>
+</nav>
+
+<script>
+// ══════════════════════════════════════════════
+// (versione online) nessun dato nel sorgente — i dati arrivano dal Google Sheet
+// ══════════════════════════════════════════════
+(function(){ if(localStorage.getItem('nx_demo')===null) localStorage.setItem('nx_demo','off'); })();
+
+// ══════════════════════════════════════════════
+// CONFIG
+// ══════════════════════════════════════════════
+const UNITS  = ['ORIENTAL','FLY FOR FOOD','ARIA','LUNGARNO','WINGSUP','EIGHT DAYS'];
+const TYPES  = ['bar','bar','bar','immob','travel','clinic']; // immob = immobiliare
+const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+
+// def[] allineati a UNITS: [ORIENTAL, FLY FOR FOOD, ARIA, LUNGARNO, WINGSUP, EIGHT DAYS]
+const FIELDS = [
+  { sec:'RICAVI', rows:[
+    { key:'corrisp',   lbl:'Corrispettivi / Fatturato',       note:'Bar: scontrini · WINGSUP: pacchetti · LUNGARNO: canoni',  def:[5000,4800,4200,2500,8000,0] },
+    { key:'fatture',   lbl:'Fatture attive clienti',           note:'IVA esposta — escluso WINGSUP',                           def:[500,400,350,0,0,15000] },
+    { key:'esenti',    lbl:'Ricavi esenti IVA',                note:'EIGHT DAYS: prestazioni sanitarie art.10',                 def:[0,0,0,0,0,12000] },
+  ]},
+  { sec:'COSTI VARIABILI — variano col fatturato', rows:[
+    { key:'materie',   lbl:'Materie prime — cf',               note:'Con fattura — da fatture elettroniche (riconciliabili)', def:[1500,1400,1200,0,0,500] },
+    { key:'materie_nf',lbl:'Materie prime — sf',               note:'Senza fattura — contanti, acquisti Cina/estero',        def:[0,0,0,0,0,0] },
+    { key:'fornitori', lbl:'Provvigioni e commissioni',        note:'Delivery (Deliveroo/Glovo), carte, intermediari', def:[300,300,300,200,500,1000] },
+    { key:'spedizioni',lbl:'Spedizioni / trasporti',           note:'Corrieri, logistica',           def:[0,0,0,0,0,0] },
+  ]},
+  { sec:'COSTI FISSI — non variano col fatturato', rows:[
+    { key:'personale', lbl:'Costo personale (lordo)',          note:'Stipendi + contributi',         def:[4500,4500,3000,0,3500,18000] },
+    { key:'affitti',   lbl:'Affitti e locazioni',              note:'',        def:[1200,1200,1200,0,2000,3000] },
+    { key:'condominio',lbl:'Condominio / spese stabile',       note:'Incl. acqua se in condominio',   def:[0,0,0,0,0,0] },
+    { key:'alloggi',   lbl:'Alloggi dipendenti',               note:'Affitti casa personale',         def:[0,0,0,0,0,0] },
+    { key:'utenze',    lbl:'Utenze (luce, gas, acqua, tel.)',  note:'',        def:[200,200,200,100,150,400] },
+    { key:'contabili', lbl:'Commercialista / consulenze / legali', note:'',    def:[0,0,0,0,0,0] },
+    { key:'manutenzioni', lbl:'Manutenzioni',                  note:'',        def:[100,100,100,300,200,300] },
+    { key:'assicurazioni',lbl:'Assicurazioni / bolli',         note:'',        def:[0,0,0,0,0,0] },
+    { key:'marketing', lbl:'Pubblicità / marketing',           note:'',        def:[50,50,50,0,300,200] },
+    { key:'altri',     lbl:'Altri costi fissi',                note:'',        def:[100,100,100,100,200,500] },
+  ]},
+  { sec:'COSTI FINANZIARI — sotto il MOL (non incidono sul MOL)', rows:[
+    { key:'finanziam', lbl:'Rate finanziamenti / prestiti',     note:'Quota capitale + interessi',  def:[0,0,0,0,0,0] },
+    { key:'interessi', lbl:'Interessi e oneri bancari',         note:'',                            def:[0,0,0,0,0,0] },
+  ]},
+  { sec:'IVA', rows:[
+    { key:'iva10',  lbl:'IVA vendite 10%',         note:'Solo bar',        def:[500,480,420,0,0,0],  noTypes:['immob','travel','clinic'] },
+    { key:'iva22',  lbl:'IVA vendite 22%',         note:'Fatture/prodotti',def:[110,88,77,0,0,0],    noTypes:['immob','travel','clinic'] },
+    { key:'ivaacq', lbl:'IVA acquisti detraibile', note:'Totale a credito',def:[330,320,300,80,0,374], noTypes:['travel'] },
+  ]},
+  { sec:'POSIZIONE BANCARIA', rows:[
+    { key:'banca',    lbl:'Saldo banca inizio mese',   note:'Da estratto conto', def:[10000,9800,9500,50000,25000,50000] },
+    { key:'incassi',  lbl:'Incassi effettivi',          note:'Entrati in banca',  def:[5500,5200,4550,2500,8000,27000] },
+    { key:'pagamenti',lbl:'Pagamenti effettivi',        note:'Usciti da banca',   def:[4200,4100,3850,1200,3500,15000] },
+    { key:'crediti',  lbl:'Crediti aperti vs clienti',  note:'Fatture da incassare', def:[0,0,0,0,3000,5000] },
+    { key:'debiti',   lbl:'Debiti aperti vs fornitori', note:'Fatture da pagare', def:[500,500,500,1000,1000,2000] },
+  ]},
+  { sec:'CONTROLLO CASSA — contante (non incide sul MOL)', rows:[
+    { key:'cash_inc', lbl:'Corrispettivi in contanti (incassati)', note:'Parte cash dei corrispettivi', def:[0,0,0,0,0,0] },
+    { key:'cash_vers',lbl:'Contante versato in banca',             note:'Versamenti effettivi',         def:[0,0,0,0,0,0] },
+  ]},
+];
+
+// ══════════════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════════════
+const SK = (a,m,k,i) => `nx_${a}_${m}_${k}_${i}`;
+const NK = (a,m) => `nx_note_${a}_${m}`;
+const TK = (a,m) => `nx_trim_${a}_${m}`; // trimestrale manuale
+
+// DEMO mode: when ON, empty cells show illustrative demo numbers.
+// Turn OFF (button in "Dati mensili") so empty cells = 0 when entering real data.
+let DEMO = localStorage.getItem('nx_demo') !== 'off';
+function sv(a,m,k,i,v){ localStorage.setItem(SK(a,m,k,i), v); }
+function lv(a,m,k,i){
+  const s = localStorage.getItem(SK(a,m,k,i));
+  if(s!==null) return parseFloat(s);
+  if(!DEMO) return 0;
+  const row = FIELDS.flatMap(f=>f.rows).find(r=>r.key===k);
+  return row ? (row.def[i]||0) : 0;
+}
+
+// ══════════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════════
+let cAnn, cMol, cIvaAnn, cCfAnn, cCE, cAnnRiepilogo, cCF, cPrev;
+// Unit filter state: -1 = all units, 0-5 = specific unit index (persisted)
+let ufCE = parseInt(localStorage.getItem('nx_uf_ce'))||(-1);
+let ufCF = parseInt(localStorage.getItem('nx_uf_cf'))||(-1);
+let ufAnn = parseInt(localStorage.getItem('nx_uf_ann'))||(-1);
+let ufIva = parseInt(localStorage.getItem('nx_uf_iva')); if(isNaN(ufIva)) ufIva=-1;
+function setUFIva(val){ ufIva=val; localStorage.setItem('nx_uf_iva',val); renderIva(); }
+
+// ══════════════════════════════════════════════
+// DATA DETECTION
+// ══════════════════════════════════════════════
+function hasData(a,m){
+  // Check if any field has user-entered data (not defaults) for this year/month
+  return FIELDS.some(sec => sec.rows.some(row => {
+    if(!row.noTypes) return UNITS.some((_,i) => localStorage.getItem(SK(a,m,row.key,i)) !== null);
+    return UNITS.some((_,i) => {
+      if(row.noTypes.includes(TYPES[i])) return false;
+      return localStorage.getItem(SK(a,m,row.key,i)) !== null;
+    });
+  }));
+}
+
+function A(){ return parseInt(document.getElementById('sel-anno').value); }
+function M(){ return parseInt(document.getElementById('sel-mese').value); }
+
+// ══════════════════════════════════════════════
+// UNIT FILTER
+// ══════════════════════════════════════════════
+function renderUFBar(containerId, stateKey, callback){
+  const el = document.getElementById(containerId);
+  let html = '<span class="uf-lbl">Società:</span>';
+  html += `<button class="uf-btn ${window[stateKey]===-1?'active':''}" onclick="setUF('${stateName_fromKey(stateKey)}',-1,'${callback}')">Tutte</button>`;
+  UNITS.forEach((u,i) => {
+    html += `<button class="uf-btn ${window[stateKey]===i?'active':''}" onclick="setUF('${stateName_fromKey(stateKey)}',${i},'${callback}')">${u.length>10?u.slice(0,9)+'…':u}</button>`;
+  });
+  el.innerHTML = html;
+}
+function stateName_fromKey(k){ return k; }
+function setUF(stateKey, val, cb){
+  window[stateKey] = val;
+  localStorage.setItem('nx_uf_'+stateKey.replace('uf','').toLowerCase(), val);
+  window[cb]();
+}
+
+function getUFIndices(stateKey){
+  if(window[stateKey]===-1) return UNITS.map((_,i)=>i);
+  return [window[stateKey]];
+}
+function getUFLabel(stateKey){
+  if(window[stateKey]===-1) return 'Tutte le società';
+  return UNITS[window[stateKey]];
+}
+
+// ══════════════════════════════════════════════
+// CALC
+// ══════════════════════════════════════════════
+function get(k,i){ return lv(A(),M(),k,i); }
+
+// Chiavi di costo — UNICA fonte di verità (usate ovunque per coerenza mensile/annuale)
+const COST_VAR_KEYS = ['materie','materie_nf','fornitori','spedizioni'];                               // variabili
+const COST_FIX_KEYS = ['personale','affitti','condominio','alloggi','utenze','contabili','manutenzioni','assicurazioni','marketing','altri']; // fissi
+const FIN_KEYS      = ['finanziam','interessi'];
+function sumKeys(a,m,i,keys){ return keys.reduce((s,k)=>s+lv(a,m,k,i),0); }
+function costiVarAM(a,m,i){ return sumKeys(a,m,i,COST_VAR_KEYS); }
+function costiFixAM(a,m,i){ return sumKeys(a,m,i,COST_FIX_KEYS); }
+function costiTotAM(a,m,i){ return costiVarAM(a,m,i)+costiFixAM(a,m,i); }
+
+function ricavi(i){ return get('corrisp',i)+get('fatture',i)+get('esenti',i); }
+function costiVar(i){ return costiVarAM(A(),M(),i); }            // costi variabili
+function costiFissi(i){ return costiFixAM(A(),M(),i); }          // costi fissi
+function costiTot(i){ return costiVar(i)+costiFissi(i); }
+function margineCtr(i){ return ricavi(i)-costiVar(i); }          // margine di contribuzione
+function mol(i){ return margineCtr(i)-costiFissi(i); }           // = ricavi - costi totali
+function finanz(i){ return sumKeys(A(),M(),i,FIN_KEYS); }        // costi finanziari (sotto il MOL)
+function risNetto(i){ return mol(i)-finanz(i); }                 // risultato dopo gestione finanziaria
+function ivaDeb(i){ return TYPES[i]==='bar' ? get('iva10',i)+get('iva22',i) : 0; }
+function ivaCred(i){ return TYPES[i]==='travel' ? 0 : get('ivaacq',i); }
+function ivaSaldo(i){ return ivaDeb(i)-ivaCred(i); }
+function cf(i){ return get('incassi',i)-get('pagamenti',i); }
+function bancaFine(i){ return get('banca',i)+get('incassi',i)-get('pagamenti',i); }
+// Controllo cassa: contante incassato − versato in banca (mese e cumulato gen→mese corrente)
+function cashDaVersareMese(i){ return get('cash_inc',i)-get('cash_vers',i); }
+function cashDaVersareCum(i){ let s=0; for(let mm=0;mm<=M();mm++){ s+=lv(A(),mm,'cash_inc',i)-lv(A(),mm,'cash_vers',i); } return s; }
+
+function totS(fn){ return UNITS.reduce((s,_,i)=>s+fn(i),0); }
+
+// ══════════════════════════════════════════════
+// FORMAT
+// ══════════════════════════════════════════════
+function eu(n,showSign){
+  if(n===null||n===undefined) return '—';
+  const s = showSign&&n>0?'+':'';
+  const abs = Math.abs(Math.round(n));
+  return (n<0?'−':s)+'€'+abs.toLocaleString('it-IT');
+}
+function pc(n){ return (n*100).toFixed(1)+'%'; }
+
+// ══════════════════════════════════════════════
+// RENDER RIEPILOGO
+// ══════════════════════════════════════════════
+function renderRiepilogo(){
+  const tr=totS(ricavi), tc=totS(costiTot), tm=totS(mol), ti=totS(ivaSaldo), tcf=totS(cf), tb=totS(bancaFine);
+  const mp = tr>0?tm/tr:0;
+
+  document.getElementById('kpi-main').innerHTML=[
+    {l:'Ricavi totali', v:eu(tr), c:'', s:''},
+    {l:'Costi totali',  v:eu(tc), c:'neg', s:''},
+    {l:'MOL / EBITDA',  v:eu(tm), c:tm>=0?'pos':'neg', s:'Margine: '+pc(mp)},
+    {l:'IVA netta mese',v:eu(ti), c:ti>0?'neg':'pos', s:ti>0?'Da versare':'Credito'},
+    {l:'Cash flow mese',v:eu(tcf,true),c:tcf>=0?'pos':'neg',s:''},
+    {l:'Saldo banca fine',v:eu(tb),c:tb>=0?'pos':'neg',s:''},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div>${k.s?'<div class="kpi-sub">'+k.s+'</div>':''}</div>`).join('');
+
+  // Struttura costi: fissi vs variabili + margine di contribuzione
+  const tcv=totS(costiVar), tcfx=totS(costiFissi), tmc=totS(margineCtr);
+  document.getElementById('kpi-costi').innerHTML=[
+    {l:'Costi variabili', v:eu(tcv), c:'neg', s:tc>0?pc(tcv/tc)+' dei costi':''},
+    {l:'Costi fissi',     v:eu(tcfx),c:'neg', s:tc>0?pc(tcfx/tc)+' dei costi':''},
+    {l:'Margine di contribuzione', v:eu(tmc), c:tmc>=0?'pos':'neg', s:tr>0?pc(tmc/tr)+' dei ricavi':''},
+    {l:'Break-even ricavi', v:eu(tmc>0?tcfx/(tmc/tr):0), c:'', s:'per coprire i fissi'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div>${k.s?'<div class="kpi-sub">'+k.s+'</div>':''}</div>`).join('');
+  const pV = tc>0?Math.round(tcv/tc*100):0, pF=100-pV;
+  document.getElementById('costi-bar').innerHTML = tc>0 ? `
+    <div style="display:flex;height:22px;border-radius:6px;overflow:hidden;border:1px solid var(--border);font-size:10px;font-weight:600;color:#fff">
+      <div style="width:${pV}%;background:var(--amber);display:flex;align-items:center;justify-content:center" title="Variabili">${pV>=12?'Variabili '+pV+'%':''}</div>
+      <div style="width:${pF}%;background:var(--blue);display:flex;align-items:center;justify-content:center" title="Fissi">${pF>=12?'Fissi '+pF+'%':''}</div>
+    </div>` : '';
+
+  const totCred2=UNITS.reduce((s,_,i)=>s+lv(A(),M(),'crediti',i),0);
+  const totDeb2=UNITS.reduce((s,_,i)=>s+lv(A(),M(),'debiti',i),0);
+  const sems2=[
+    {l:'MOL',         c:tm>0?'g':'r',   v:tm>0?'✓ Positivo':'✗ Negativo'},
+    {l:'Cash flow',   c:tcf>=0?'g':'r', v:tcf>=0?'✓ In attivo':'✗ In passivo'},
+    {l:'IVA mese',    c:ti<=0?'g':'y',  v:ti<=0?'✓ Credito IVA':'! Debito '+eu(ti)},
+    {l:'Saldo banca', c:tb>0?'g':'r',   v:tb>0?'✓ Positivo':'✗ Negativo'},
+    {l:'Crediti',     c:totCred2===0?'g':'y', v:totCred2===0?'✓ Nessuno':'! Da incassare'},
+    {l:'Copertura',   c:tb>totDeb2?'g':'y', v:tb>totDeb2?'✓ Coperta':'! Attenzione'},
+    (function(){ let dv=0; for(let mm=0;mm<=M();mm++){ UNITS.forEach((_,i)=>{ dv+=lv(A(),mm,'cash_inc',i)-lv(A(),mm,'cash_vers',i); }); } return {l:'Contante da versare', c:Math.abs(dv)<1?'g':'y', v:Math.abs(dv)<1?'✓ Tutto versato':'! '+eu(dv)+' in cassa'}; })(),
+  ];
+  document.getElementById('semafori').innerHTML=sems2.map(s=>`<div class="sem ${s.c}"><div class="sem-lbl">${s.l}</div><div class="sem-val">${s.v}</div></div>`).join('');
+
+  document.getElementById('unit-cards').innerHTML=UNITS.map((u,i)=>{
+    const r=ricavi(i),m=mol(i),mp2=r>0?m/r:0;
+    return`<div class="unit-card"><div class="unit-name">${u}</div><div class="unit-rev">${eu(r)}</div><div class="unit-mol ${m>=0?'pos':'neg'}">MOL ${eu(m)} · ${pc(mp2)}</div></div>`;
+  }).join('');
+
+  const na=document.getElementById('note-area');
+  na.value=localStorage.getItem(NK(A(),M()))||'';
+  na.onchange=()=>localStorage.setItem(NK(A(),M()),na.value);
+
+  renderAnnualSummary();
+}
+
+// ══════════════════════════════════════════════
+// RENDER RIEPILOGO ANNUALE
+// ══════════════════════════════════════════════
+function renderAnnualSummary(){
+  const a = A();
+  document.getElementById('ann-year-label').textContent = a;
+
+  const annRicaviPerUnit = new Array(UNITS.length).fill(0);
+  const annMolPerUnit    = new Array(UNITS.length).fill(0);
+  const labels = ['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  const mRicavi=[], mCosti=[], mMol=[];
+  let annR=0, annC=0, annM=0, annI=0, annCF=0;
+  let dataCount=0;
+
+  for(let m=0; m<12; m++){
+    const has = hasData(a,m);
+    const mr = UNITS.reduce((s,_,i)=>s+lv(a,m,'corrisp',i)+lv(a,m,'fatture',i)+lv(a,m,'esenti',i),0);
+    const mc = UNITS.reduce((s,_,i)=>{
+      return s+costiTotAM(a,m,i);
+    },0);
+    const mm = mr - mc;
+    if(has){ dataCount++; annR+=mr; annC+=mc; annM+=mm; }
+    mRicavi.push(has?mr:0);
+    mCosti.push(has?mc:0);
+    mMol.push(has?mm:0);
+    UNITS.forEach((_,i)=>{
+      const r=lv(a,m,'corrisp',i)+lv(a,m,'fatture',i)+lv(a,m,'esenti',i);
+      const c2=costiTotAM(a,m,i);
+      if(has){ annRicaviPerUnit[i]+=r; annMolPerUnit[i]+=(r-c2); }
+    });
+    if(has){
+      annI += UNITS.reduce((s,_,i)=>s+(TYPES[i]==='bar'?(lv(a,m,'iva10',i)+lv(a,m,'iva22',i)):0)-((TYPES[i]!=='travel')?lv(a,m,'ivaacq',i):0),0);
+      annCF += UNITS.reduce((s,_,i)=>s+lv(a,m,'incassi',i)-lv(a,m,'pagamenti',i),0);
+    }
+  }
+
+  const mp = annR>0 ? annM/annR : 0;
+  const noteEl = document.getElementById('ann-data-note');
+  if(dataCount<12) noteEl.textContent = `(dati inseriti: ${dataCount}/12 mesi)`;
+  else noteEl.textContent = '';
+
+  document.getElementById('kpi-ann-main').innerHTML=[
+    {l:'Ricavi anno',    v:eu(annR),       c:'',              s:''},
+    {l:'Costi anno',     v:eu(annC),       c:'neg',           s:''},
+    {l:'MOL anno',       v:eu(annM),       c:annM>=0?'pos':'neg', s:'Margine: '+pc(mp)},
+    {l:'IVA cumulata',   v:eu(annI),       c:annI>0?'neg':'pos', s:annI>0?'Da versare':'Credito'},
+    {l:'Cash flow anno', v:eu(annCF,true), c:annCF>=0?'pos':'neg', s:''},
+    {l:'Media mensile',  v:eu(dataCount>0?annR/dataCount:0), c:'', s:'Ricavi/mese'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div>${k.s?'<div class="kpi-sub">'+k.s+'</div>':''}</div>`).join('');
+
+  document.getElementById('unit-cards-ann').innerHTML=UNITS.map((u,i)=>{
+    const r=annRicaviPerUnit[i], m2=annMolPerUnit[i], mp2=r>0?m2/r:0;
+    return`<div class="unit-card"><div class="unit-name">${u}</div><div class="unit-rev">${eu(r)}</div><div class="unit-mol ${m2>=0?'pos':'neg'}">MOL ${eu(m2)} · ${pc(mp2)}</div></div>`;
+  }).join('');
+
+  if(cAnnRiepilogo) cAnnRiepilogo.destroy();
+  cAnnRiepilogo = new Chart(document.getElementById('chart-ann-riepilogo'),{
+    type:'bar',
+    data:{
+      labels,
+      datasets:[
+        {label:'Ricavi', data:mRicavi, backgroundColor:'rgba(26,107,69,.65)', borderRadius:4},
+        {label:'Costi',  data:mCosti,  backgroundColor:'rgba(176,42,42,.45)', borderRadius:4},
+        {label:'MOL',    data:mMol,    type:'line', borderColor:'#2B5CE6', borderWidth:2, pointRadius:3, fill:false, tension:.35},
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},
+      scales:{y:{ticks:{callback:v=>'€'+Math.round(v/1000)+'k'}}}
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// RENDER FORM
+// ══════════════════════════════════════════════
+function renderForm(){
+  document.getElementById('dati-period').textContent=MONTHS[M()]+' '+A();
+  let html='';
+  FIELDS.forEach(sec=>{
+    html+=`<div class="form-block"><div class="form-block-hdr">${sec.sec}</div>`;
+    html+=`<div style="overflow-x:auto"><table class="form-table"><thead><tr><th>Voce</th>`;
+    UNITS.forEach(u=>html+=`<th style="min-width:110px">${u}</th>`);
+    html+=`<th style="min-width:100px">Totale</th></tr></thead><tbody>`;
+    sec.rows.forEach(row=>{
+      html+=`<tr><td class="row-lbl">${row.lbl}${row.note?`<small>${row.note}</small>`:''}</td>`;
+      UNITS.forEach((u,i)=>{
+        const disabled = row.noTypes && row.noTypes.includes(TYPES[i]);
+        const isTravel = TYPES[i]==='travel' && row.noTypes && row.noTypes.includes('travel');
+        const isClinic = TYPES[i]==='clinic' && row.noTypes && row.noTypes.includes('clinic');
+        const isImmob  = TYPES[i]==='immob'  && row.noTypes && row.noTypes.includes('immob');
+        if(disabled){
+          const lbl = isTravel?'N/A':(isClinic?'Esente':'—');
+          html+=`<td><input class="num-in" disabled value="${lbl}" style="text-align:center"></td>`;
+        } else {
+          const val=lv(A(),M(),row.key,i);
+          const sp=(row.key==='corrisp'&&TYPES[i]==='travel')?' special':'';
+          html+=`<td><input class="num-in${sp}" type="number" min="0" step="1" data-key="${row.key}" data-unit="${i}" value="${Math.round(val)}" oninput="liveUpdate(this)"></td>`;
+        }
+      });
+      const tot=UNITS.reduce((s,_,i)=>{
+        if(row.noTypes&&row.noTypes.includes(TYPES[i])) return s;
+        return s+lv(A(),M(),row.key,i);
+      },0);
+      html+=`<td class="row-tot" id="ft_${row.key}">${eu(tot)}</td></tr>`;
+    });
+    html+=`</tbody></table></div></div>`;
+  });
+  document.getElementById('form-container').innerHTML=html;
+}
+
+function liveUpdate(inp){
+  const k=inp.dataset.key, i=parseInt(inp.dataset.unit), v=parseFloat(inp.value)||0;
+  sv(A(),M(),k,i,v);
+  const row=FIELDS.flatMap(f=>f.rows).find(r=>r.key===k);
+  const tot=UNITS.reduce((s,_,j)=>{
+    if(row.noTypes&&row.noTypes.includes(TYPES[j])) return s;
+    return s+lv(A(),M(),k,j);
+  },0);
+  const el=document.getElementById('ft_'+k);
+  if(el) el.textContent=eu(tot);
+  syncPushDebounced();
+}
+
+function saveAll(){
+  document.querySelectorAll('.num-in[data-key]').forEach(inp=>{
+    sv(A(),M(),inp.dataset.key,parseInt(inp.dataset.unit),parseFloat(inp.value)||0);
+  });
+  const ok=document.getElementById('save-ok');
+  ok.style.display='inline';
+  setTimeout(()=>ok.style.display='none',2500);
+  renderRiepilogo();
+  syncPushDebounced();
+}
+
+// ══════════════════════════════════════════════
+// RENDER IVA
+// ══════════════════════════════════════════════
+function renderIvaBar(){
+  const el=document.getElementById('uf-iva'); if(!el)return;
+  let h='<span class="uf-lbl">Società:</span>';
+  h+=`<button class="uf-btn ${ufIva===-1?'active':''}" onclick="setUFIva(-1)">Tutte</button>`;
+  UNITS.forEach((u,i)=>{ h+=`<button class="uf-btn ${ufIva===i?'active':''}" onclick="setUFIva(${i})">${u.length>10?u.slice(0,9)+'…':u}</button>`; });
+  el.innerHTML=h;
+}
+function renderIva(){
+  renderIvaBar();
+  const idx = ufIva===-1 ? UNITS.map((_,i)=>i) : [ufIva];
+  const isAll = ufIva===-1;
+  const rows=[
+    {l:'IVA vendite 10%',   vals:idx.map(i=>TYPES[i]==='bar'?lv(A(),M(),'iva10',i):null), type:'ref'},
+    {l:'IVA vendite 22%',   vals:idx.map(i=>TYPES[i]==='bar'?lv(A(),M(),'iva22',i):null), type:'ref'},
+    {l:'Totale IVA a debito',vals:idx.map(i=>TYPES[i]==='bar'?lv(A(),M(),'iva10',i)+lv(A(),M(),'iva22',i):null), type:'sub'},
+    {l:'IVA acquisti (credito)',vals:idx.map(i=>TYPES[i]==='travel'?null:lv(A(),M(),'ivaacq',i)), type:'ref'},
+    {l:'Saldo IVA mese',    vals:idx.map(i=>ivaSaldo(i)), type:'saldo'},
+  ];
+  const th=`<thead><tr><th>Voce</th>${idx.map(i=>`<th>${UNITS[i]}</th>`).join('')}${isAll?'<th>Totale</th>':''}</tr></thead>`;
+  const tb='<tbody>'+rows.map(row=>{
+    const tds=row.vals.map((v,k)=>{
+      const i=idx[k];
+      if(v===null){
+        const lbl=TYPES[i]==='travel'?'N/A':(TYPES[i]==='clinic'?'Esente':'—');
+        return`<td><span class="pill n">${lbl}</span></td>`;
+      }
+      if(row.type==='saldo') return`<td><span class="pill ${v>0?'d':'c'}">${eu(v)}</span></td>`;
+      return`<td>${eu(v)}</td>`;
+    }).join('');
+    const tot=row.vals.reduce((s,v)=>s+(v===null?0:v),0);
+    const totTd=!isAll?'':(row.type==='saldo'?`<td><strong><span class="pill ${tot>0?'d':'c'}">${eu(tot)}</span></strong></td>`:`<td><strong>${eu(tot)}</strong></td>`);
+    const cls=row.type==='sub'?'sub':row.type==='saldo'?'total':'';
+    return`<tr class="${cls}"><td>${row.l}</td>${tds}${totTd}</tr>`;
+  }).join('')+'</tbody>';
+  document.getElementById('iva-table').innerHTML=th+tb;
+
+  const totDeb=idx.reduce((s,i)=>s+ivaDeb(i),0);
+  const totCred=idx.reduce((s,i)=>s+ivaCred(i),0);
+  const saldo=totDeb-totCred;
+  document.getElementById('kpi-iva').innerHTML=[
+    {l:'IVA a debito',v:eu(totDeb),c:'neg'},
+    {l:'IVA a credito',v:eu(totCred),c:'pos'},
+    {l:'Saldo mese',v:eu(saldo),c:saldo>0?'neg':'pos'},
+    {l:saldo>0?'Da versare':'Credito',v:saldo>0?'Debito IVA':'Credito IVA',c:saldo>0?'neg':'pos'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div></div>`).join('');
+
+  // Trimestrale: somma 3 mesi del trimestre corrente
+  const trimMese=M();
+  const trimStart=Math.floor(trimMese/3)*3;
+  let trimDeb=0,trimCred=0;
+  for(let mm=trimStart;mm<=trimMese;mm++){
+    idx.forEach(i=>{
+      trimDeb+=TYPES[i]==='bar'?(lv(A(),mm,'iva10',i)+lv(A(),mm,'iva22',i)):0;
+      trimCred+=TYPES[i]!=='travel'?lv(A(),mm,'ivaacq',i):0;
+    });
+  }
+  // Cumulato annuo (progressivo gennaio → mese corrente)
+  let annDeb=0, annCred=0;
+  for(let mm=0; mm<=trimMese; mm++){
+    idx.forEach(i=>{
+      annDeb+=TYPES[i]==='bar'?(lv(A(),mm,'iva10',i)+lv(A(),mm,'iva22',i)):0;
+      annCred+=TYPES[i]!=='travel'?lv(A(),mm,'ivaacq',i):0;
+    });
+  }
+  const Q=['1º','2º','3º','4º'][Math.floor(trimMese/3)];
+  document.getElementById('iva-summary').innerHTML =
+    ivaCard(`${Q} trimestre`, `mesi ${trimStart+1}–${trimMese+1} ${A()}`, trimDeb, trimCred) +
+    ivaCard(`Da inizio anno`, `gennaio → ${MONTHS[trimMese].toLowerCase()} ${A()}`, annDeb, annCred);
+}
+
+// Card IVA "a prova di stupido": grande, colorata, con conclusione in parole
+function ivaCard(title, sub, deb, cred){
+  const saldo = deb - cred;
+  const pay = saldo > 0.5;
+  const color = pay ? 'var(--red)'   : 'var(--green)';
+  const bg    = pay ? 'var(--red-bg)': 'var(--green-bg)';
+  const bd    = pay ? 'var(--red-border)' : 'var(--green-border)';
+  const icon  = pay ? '↑' : '↓';
+  const head  = pay ? 'DA VERSARE' : 'CREDITO IVA (a tuo favore)';
+  const amount= eu(Math.abs(saldo));
+  return `<div style="flex:1;min-width:240px;background:${bg};border:1px solid ${bd};border-radius:var(--radius-lg);padding:16px 18px">
+    <div style="font-size:11px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--text2)">${title}</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">${sub}</div>
+    <div style="font-size:12px;font-weight:700;letter-spacing:.04em;color:${color}">${icon} ${head}</div>
+    <div style="font-size:30px;font-weight:600;color:${color};letter-spacing:-.02em;line-height:1.1;margin-top:2px">${amount}</div>
+    <div style="font-size:11px;color:var(--text3);margin-top:10px;padding-top:8px;border-top:1px solid ${bd}">
+      IVA incassata (vendite) ${eu(deb)}<br>− IVA pagata (acquisti) ${eu(cred)}
+    </div>
+  </div>`;
+}
+
+// ══════════════════════════════════════════════
+// RENDER CONTO ECONOMICO
+// ══════════════════════════════════════════════
+function renderCE(){
+  renderUFBar('uf-ce','ufCE','renderCE');
+  const idx=getUFIndices('ufCE'), isAll=ufCE===-1;
+  const tr=idx.reduce((s,i)=>s+ricavi(i),0), tcv=idx.reduce((s,i)=>s+costiVar(i),0), tcf=idx.reduce((s,i)=>s+costiFissi(i),0);
+  const tmc=idx.reduce((s,i)=>s+margineCtr(i),0), tm=idx.reduce((s,i)=>s+mol(i),0);
+  const tfin=idx.reduce((s,i)=>s+finanz(i),0), trn=idx.reduce((s,i)=>s+risNetto(i),0);
+  const label=isAll?'consolidati':UNITS[ufCE];
+  document.getElementById('kpi-ce').innerHTML=[
+    {l:'Ricavi '+label,           v:eu(tr),c:'pos'},
+    {l:'Margine di contribuzione',v:eu(tmc),c:tmc>=0?'pos':'neg', s:tr>0?pc(tmc/tr)+' dei ricavi':''},
+    {l:'MOL / EBITDA',            v:eu(tm),c:tm>=0?'pos':'neg', s:tr>0?pc(tm/tr):''},
+    {l:'Risultato netto',         v:eu(trn),c:trn>=0?'pos':'neg', s:tfin>0?'dopo €'+Math.round(tfin).toLocaleString('it-IT')+' fin.':''},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div>${k.s?'<div class="kpi-sub">'+k.s+'</div>':''}</div>`).join('');
+
+  const ceRows=[
+    {l:'Corrispettivi / canoni / fatturato', vals:idx.map(i=>lv(A(),M(),'corrisp',i)),          cls:''},
+    {l:'Fatture attive',                     vals:idx.map(i=>lv(A(),M(),'fatture',i)),          cls:''},
+    {l:'Ricavi esenti IVA',                  vals:idx.map(i=>lv(A(),M(),'esenti',i)),           cls:''},
+    {l:'= Totale ricavi',                    vals:idx.map(i=>ricavi(i)),                         cls:'sub-green'},
+    {l:'− Costi variabili',                  vals:idx.map(i=>costiVar(i)),                       cls:'sub-red'},
+    {l:'= Margine di contribuzione',         vals:idx.map(i=>margineCtr(i)),                     cls:'sub-blue'},
+    {l:'  Margine contribuzione %',          vals:idx.map(i=>ricavi(i)>0?margineCtr(i)/ricavi(i):0), cls:'', pct:true},
+    {l:'− Costi fissi',                      vals:idx.map(i=>costiFissi(i)),                     cls:'sub-red'},
+    {l:'= MOL / EBITDA',                     vals:idx.map(i=>mol(i)),                            cls:'sub-blue'},
+    {l:'  Margine MOL %',                    vals:idx.map(i=>ricavi(i)>0?mol(i)/ricavi(i):0),    cls:'', pct:true},
+    {l:'− Costi finanziari (rate, interessi)', vals:idx.map(i=>finanz(i)),                       cls:'sub-red'},
+    {l:'= Risultato netto di gestione',      vals:idx.map(i=>risNetto(i)),                       cls:'sub-blue'},
+  ];
+  const colLabels=idx.map(i=>UNITS[i]);
+  const th=`<thead><tr><th>Voce</th>${colLabels.map(u=>`<th>${u}</th>`).join('')}${isAll?'<th>Totale</th>':''}</tr></thead>`;
+  const tb='<tbody>'+ceRows.map(row=>{
+    const tds=row.vals.map(v=>`<td>${row.pct?pc(v):eu(v)}</td>`).join('');
+    const tot=row.pct?pc(tr>0?tm/tr:0):eu(row.vals.reduce((s,v)=>s+v,0));
+    return`<tr class="${row.cls}"><td>${row.l}</td>${tds}${isAll?`<td><strong>${tot}</strong></td>`:''}</tr>`;
+  }).join('')+'</tbody>';
+  document.getElementById('ce-table').innerHTML=th+tb;
+
+  document.getElementById('ce-chart-title').textContent=isAll?'Ricavi · Costi · MOL per società':UNITS[ufCE]+' — Struttura Conto Economico';
+  if(cCE) cCE.destroy();
+  if(isAll){
+    cCE=new Chart(document.getElementById('chart-ce'),{
+      type:'bar',
+      data:{labels:UNITS.map(u=>u.length>9?u.slice(0,9)+'…':u),datasets:[
+        {label:'Ricavi',data:UNITS.map((_,i)=>ricavi(i)),backgroundColor:'rgba(26,107,69,.7)',borderRadius:4},
+        {label:'Costi', data:UNITS.map((_,i)=>costiTot(i)),backgroundColor:'rgba(176,42,42,.5)',borderRadius:4},
+        {label:'MOL',   data:UNITS.map((_,i)=>mol(i)),backgroundColor:'rgba(26,63,122,.65)',borderRadius:4},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>'€'+Math.round(v/1000)+'k'}}}}
+    });
+  } else {
+    const i=ufCE;
+    const ckeys=[...COST_VAR_KEYS,...COST_FIX_KEYS];
+    const KL={materie:'Mat.cf',materie_nf:'Mat.sf',fornitori:'Provvig.',spedizioni:'Spediz.',personale:'Personale',affitti:'Affitti',condominio:'Condom.',alloggi:'Alloggi',utenze:'Utenze',contabili:'Consul.',manutenzioni:'Manut.',assicurazioni:'Assicur.',marketing:'Mktg',altri:'Altri'};
+    const ceLabels=[...ckeys.map(k=>KL[k]||k),'Costi tot.','Ricavi','MOL'];
+    const ceData=[...ckeys.map(k=>get(k,i)),costiTot(i),ricavi(i),mol(i)];
+    const ceBg=[...ckeys.map(()=>'rgba(176,42,42,.45)'),'rgba(176,42,42,.7)','rgba(26,107,69,.7)',mol(i)>=0?'rgba(26,63,122,.7)':'rgba(176,42,42,.9)'];
+    cCE=new Chart(document.getElementById('chart-ce'),{
+      type:'bar',
+      data:{labels:ceLabels,datasets:[{
+        label:UNITS[i],
+        data:ceData,
+        backgroundColor:ceBg,
+        borderRadius:3
+      }]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'€'+Math.round(v/1000)+'k'}}}}
+    });
+  }
+  renderCEForn();
+}
+
+// Dettaglio costi per fornitore nella pagina Conto economico
+function renderCEForn(){
+  const el=document.getElementById('ce-fornitori'); if(!el)return;
+  if(ufCE===-1){ el.innerHTML='<div style="font-size:12px;color:var(--text3);padding:2px 0">Seleziona una società qui sopra per vedere i costi per singolo fornitore.</div>'; return; }
+  const i=ufCE;
+  let html='';
+  detCats().forEach(c=>{
+    const tot=lv(A(),M(),c.key,i);
+    const rows=detLoadFor(A(),M(),c.key,i);
+    if(tot===0 && !rows.length) return;
+    if(rows.length){
+      const sum=rows.reduce((s,r)=>s+(parseFloat(r.v)||0),0);
+      const diff=sum-tot, ok=Math.abs(diff)<0.5;
+      html+=`<details style="border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--surface)">
+        <summary style="cursor:pointer;padding:9px 12px;font-size:13px;display:flex;justify-content:space-between;gap:10px;align-items:center">
+          <span>${c.lbl}</span>
+          <span style="display:flex;gap:12px;align-items:center;font-variant-numeric:tabular-nums">
+            <span style="font-size:11px;color:${ok?'var(--text3)':'var(--amber)'}">${ok?'✓':'Δ '+eu(diff)}</span>
+            <strong>${eu(tot)}</strong>
+          </span>
+        </summary>
+        <table class="data-table" style="font-size:12px;margin:0 0 4px">
+          ${rows.map(r=>`<tr><td>${(r.n||'—')}</td><td style="text-align:right;font-variant-numeric:tabular-nums">${eu(parseFloat(r.v)||0)}</td></tr>`).join('')}
+        </table>
+      </details>`;
+    } else {
+      html+=`<div style="display:flex;justify-content:space-between;align-items:center;padding:9px 12px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--surface);font-size:13px">
+        <span>${c.lbl} <span style="color:var(--text3);font-size:11px">· nessun dettaglio</span></span>
+        <strong style="font-variant-numeric:tabular-nums">${eu(tot)}</strong></div>`;
+    }
+  });
+  el.innerHTML = html || '<div style="font-size:12px;color:var(--text3)">Nessun costo per questa società nel mese.</div>';
+}
+
+// ══════════════════════════════════════════════
+// RENDER CASH FLOW
+// ══════════════════════════════════════════════
+function renderCF(){
+  renderUFBar('uf-cf','ufCF','renderCF');
+  const idx=getUFIndices('ufCF'), isAll=ufCF===-1;
+  const tcf=idx.reduce((s,i)=>s+cf(i),0), tb=idx.reduce((s,i)=>s+bancaFine(i),0);
+  const totCred=idx.reduce((s,i)=>s+lv(A(),M(),'crediti',i),0);
+  const totDeb=idx.reduce((s,i)=>s+lv(A(),M(),'debiti',i),0);
+  document.getElementById('kpi-cf').innerHTML=[
+    {l:'Saldo banca fine mese',v:eu(tb),c:tb>=0?'pos':'neg'},
+    {l:'Cash flow netto',      v:eu(tcf,true),c:tcf>=0?'pos':'neg'},
+    {l:'Crediti da incassare', v:eu(totCred),c:totCred>0?'warn':'pos'},
+    {l:'Debiti da pagare',     v:eu(totDeb),c:totDeb>0?'neg':'pos'},
+    {l:'Posizione netta comm.',v:eu(totCred-totDeb,true),c:(totCred-totDeb)>=0?'pos':'neg'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div></div>`).join('');
+
+  // Controllo cassa contante
+  const cIn=idx.reduce((s,i)=>s+lv(A(),M(),'cash_inc',i),0);
+  const cVs=idx.reduce((s,i)=>s+lv(A(),M(),'cash_vers',i),0);
+  const cMese=cIn-cVs;
+  let cCum=0; for(let mm=0;mm<=M();mm++){ idx.forEach(i=>{ cCum+=lv(A(),mm,'cash_inc',i)-lv(A(),mm,'cash_vers',i); }); }
+  const okCum=Math.abs(cCum)<1;
+  document.getElementById('kpi-cassa').innerHTML=[
+    {l:'Contante incassato (mese)', v:eu(cIn), c:'', s:'parte cash dei corrispettivi'},
+    {l:'Contante versato (mese)',   v:eu(cVs), c:'pos', s:'in banca'},
+    {l:'Da versare (mese)',         v:eu(cMese), c:cMese>0?'warn':'pos', s:cMese>0?'ancora in cassa':'✓ versato'},
+    {l:'Da versare (cumulato)',     v:eu(cCum), c:okCum?'pos':(cCum>0?'neg':'warn'), s:okCum?'✓ tutto versato':'contante non ancora in banca'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div>${k.s?'<div class="kpi-sub">'+k.s+'</div>':''}</div>`).join('');
+
+  const cfRows=[
+    {l:'Saldo banca inizio',    vals:idx.map(i=>lv(A(),M(),'banca',i)),    cls:''},
+    {l:'(+) Incassi effettivi', vals:idx.map(i=>lv(A(),M(),'incassi',i)),  cls:''},
+    {l:'(−) Pagamenti effettivi',vals:idx.map(i=>lv(A(),M(),'pagamenti',i)),cls:''},
+    {l:'= Saldo fine mese',     vals:idx.map(i=>bancaFine(i)),             cls:'sub-blue'},
+    {l:'Crediti aperti',        vals:idx.map(i=>lv(A(),M(),'crediti',i)),  cls:''},
+    {l:'Debiti aperti',         vals:idx.map(i=>lv(A(),M(),'debiti',i)),   cls:''},
+    {l:'Cash flow netto',       vals:idx.map(i=>cf(i)),                    cls:'sub-green'},
+  ];
+  const colLabels=idx.map(i=>UNITS[i]);
+  const th=`<thead><tr><th>Voce</th>${colLabels.map(u=>`<th>${u}</th>`).join('')}${isAll?'<th>Totale</th>':''}</tr></thead>`;
+  const tb2='<tbody>'+cfRows.map(row=>{
+    const tds=row.vals.map(v=>`<td>${eu(v)}</td>`).join('');
+    const tot=row.vals.reduce((s,v)=>s+v,0);
+    return`<tr class="${row.cls}"><td>${row.l}</td>${tds}${isAll?`<td><strong>${eu(tot)}</strong></td>`:''}</tr>`;
+  }).join('')+'</tbody>';
+  document.getElementById('cf-table').innerHTML=th+tb2;
+
+  document.getElementById('cf-chart-title').textContent=isAll?'Cash flow mensile per unità':UNITS[ufCF]+' — Cash flow';
+  if(cCF) cCF.destroy();
+  if(isAll){
+    cCF=new Chart(document.getElementById('chart-cf'),{
+      type:'bar',
+      data:{labels:UNITS.map(u=>u.length>9?u.slice(0,9)+'…':u),datasets:[
+        {label:'Incassi',data:UNITS.map((_,i)=>lv(A(),M(),'incassi',i)),backgroundColor:'rgba(26,107,69,.7)',borderRadius:4},
+        {label:'Pagamenti',data:UNITS.map((_,i)=>lv(A(),M(),'pagamenti',i)),backgroundColor:'rgba(176,42,42,.5)',borderRadius:4},
+        {label:'CF netto',data:UNITS.map((_,i)=>cf(i)),backgroundColor:'rgba(26,63,122,.65)',borderRadius:4},
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}},scales:{y:{ticks:{callback:v=>'€'+Math.round(v/1000)+'k'}}}}
+    });
+  } else {
+    const i=ufCF;
+    cCF=new Chart(document.getElementById('chart-cf'),{
+      type:'bar',
+      data:{labels:['Incassi','Pagamenti','CF netto'],datasets:[{label:UNITS[i],data:[lv(A(),M(),'incassi',i),lv(A(),M(),'pagamenti',i),cf(i)],backgroundColor:['rgba(26,107,69,.7)','rgba(176,42,42,.5)','rgba(26,63,122,.65)'],borderRadius:4}]},
+      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'€'+Math.round(v/1000)+'k'}}}}
+    });
+  }
+  renderPrevisione();
+}
+
+// ══════════════════════════════════════════════
+// PREVISIONE CASSA — saldo banca proiettato a 12 mesi
+// Reale sui mesi con dati; previsione futura = media del cash flow netto dei mesi con dati.
+// ══════════════════════════════════════════════
+function renderPrevisione(){
+  const a=A(), idx=getUFIndices('ufCF');
+  const labels=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  const net=[], has=[];
+  let lastData=-1, firstData=-1;
+  for(let m=0;m<12;m++){
+    const h=hasData(a,m); has.push(h);
+    if(h){ if(firstData<0)firstData=m; lastData=m; }
+    net.push(idx.reduce((s,i)=>s+lv(a,m,'incassi',i)-lv(a,m,'pagamenti',i),0));
+  }
+  const nData=has.filter(Boolean).length;
+  const avgNet = nData ? has.reduce((s,h,m)=>s+(h?net[m]:0),0)/nData : 0;
+  const startBal = firstData>=0 ? idx.reduce((s,i)=>s+lv(a,firstData,'banca',i),0) : 0;
+
+  const bal=[]; let run=startBal;
+  for(let m=0;m<12;m++){
+    if(firstData<0 || m<firstData){ bal.push(null); continue; }
+    run += has[m] ? net[m] : avgNet;   // mesi con dati: reale · futuri: media
+    bal.push(Math.round(run));
+  }
+
+  // KPI
+  const validBal=bal.filter(v=>v!==null);
+  const endYear = bal[11];
+  let minVal=null, minMonth=-1;
+  bal.forEach((v,m)=>{ if(v!==null && (minVal===null||v<minVal)){ minVal=v; minMonth=m; } });
+  const kp=document.getElementById('kpi-prev');
+  if(kp) kp.innerHTML=[
+    {l:'Cash flow medio / mese', v:eu(Math.round(avgNet),true), c:avgNet>=0?'pos':'neg', s:'base della previsione'},
+    {l:'Saldo previsto fine anno', v:endYear!==null?eu(endYear):'—', c:(endYear||0)>=0?'pos':'neg', s:'dicembre '+a},
+    {l:'Cassa minima prevista', v:minVal!==null?eu(minVal):'—', c:(minVal||0)>=0?'pos':'neg', s:minMonth>=0?('a '+labels[minMonth]):''},
+    {l:'Mesi con dati', v:nData+'/12', c:'', s:nData<12?'previsione dai dati reali':'anno completo'},
+  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div>${k.s?'<div class="kpi-sub">'+k.s+'</div>':''}</div>`).join('');
+
+  const cut=lastData;
+  if(cPrev) cPrev.destroy();
+  cPrev=new Chart(document.getElementById('chart-prev'),{
+    type:'line',
+    data:{labels,datasets:[{
+      label:'Saldo banca', data:bal, spanGaps:true,
+      borderColor:'#2B5CE6', borderWidth:2, tension:.3,
+      pointRadius:bal.map((_,m)=>m>cut?3:3),
+      pointBackgroundColor:bal.map((_,m)=>m>cut?'#9B9990':'#2B5CE6'),
+      segment:{ borderDash:ctx=>ctx.p0DataIndex>=cut?[6,6]:undefined,
+                borderColor:ctx=>ctx.p0DataIndex>=cut?'#9B9990':'#2B5CE6' },
+      fill:false
+    }]},
+    options:{responsive:true,maintainAspectRatio:false,
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>(c.dataIndex>cut?'Previsto: ':'Reale: ')+eu(c.parsed.y)}}},
+      scales:{y:{ticks:{callback:v=>'€'+Math.round(v/1000)+'k'}}}}
+  });
+}
+
+// ══════════════════════════════════════════════
+// RENDER ANNUALE
+// ══════════════════════════════════════════════
+function renderAnnuale(){
+  renderUFBar('uf-ann','ufAnn','renderAnnuale');
+  const a=A(), idx=getUFIndices('ufAnn'), isAll=ufAnn===-1;
+  const labels=['Gen','Feb','Mar','Apr','Mag','Giu','Lug','Ago','Set','Ott','Nov','Dic'];
+  const annR=[],annC=[],annM=[],annI=[],annCF=[];
+
+  for(let m=0;m<12;m++){
+    const has = hasData(a,m);
+    const mr = has ? idx.reduce((s,i)=>s+lv(a,m,'corrisp',i)+lv(a,m,'fatture',i)+lv(a,m,'esenti',i),0) : 0;
+    const mc = has ? idx.reduce((s,i)=>s+costiTotAM(a,m,i),0) : 0;
+    const mm = mr - mc;
+    const mi = has ? idx.reduce((s,i)=>s+(TYPES[i]==='bar'?(lv(a,m,'iva10',i)+lv(a,m,'iva22',i)):0)-((TYPES[i]!=='travel')?lv(a,m,'ivaacq',i):0),0) : 0;
+    const mcf = has ? idx.reduce((s,i)=>s+lv(a,m,'incassi',i)-lv(a,m,'pagamenti',i),0) : 0;
+    annR.push(mr); annC.push(mc); annM.push(mm); annI.push(mi); annCF.push(mcf);
+  }
+
+  const ufLabel = isAll ? 'tutti i mesi' : UNITS[ufAnn];
+  document.getElementById('ann-chart-title').textContent='Ricavi vs Costi — '+ufLabel;
+  document.getElementById('ann-mol-title').textContent='MOL mensile — '+ufLabel;
+  document.getElementById('ann-cf-title').textContent='Cash flow netto mensile — '+ufLabel;
+
+  const opts={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'€'+Math.round(v/1000)+'k'}}}};
+
+  if(cAnn) cAnn.destroy();
+  cAnn=new Chart(document.getElementById('chart-ann'),{type:'bar',data:{labels,datasets:[
+    {label:'Ricavi',data:annR,backgroundColor:'rgba(26,107,69,.6)',borderRadius:3},
+    {label:'Costi', data:annC,backgroundColor:'rgba(176,42,42,.4)',borderRadius:3},
+    {label:'Trend', data:annR,type:'line',borderColor:'#1A6B45',borderWidth:2,pointRadius:0,fill:false,tension:.4},
+  ]},options:{...opts,plugins:{legend:{position:'bottom',labels:{font:{size:11}}}}}});
+
+  if(cMol) cMol.destroy();
+  cMol=new Chart(document.getElementById('chart-mol'),{type:'bar',data:{labels,datasets:[{
+    data:annM,backgroundColor:annM.map(v=>v>=0?'rgba(26,63,122,.7)':'rgba(176,42,42,.7)'),borderRadius:3
+  }]},options:opts});
+
+  if(cIvaAnn) cIvaAnn.destroy();
+  cIvaAnn=new Chart(document.getElementById('chart-iva-ann'),{type:'bar',data:{labels,datasets:[{
+    data:annI,backgroundColor:annI.map(v=>v>0?'rgba(176,42,42,.7)':'rgba(26,107,69,.7)'),borderRadius:3
+  }]},options:opts});
+
+  if(cCfAnn) cCfAnn.destroy();
+  cCfAnn=new Chart(document.getElementById('chart-cf-ann'),{type:'bar',data:{labels,datasets:[{
+    data:annCF,backgroundColor:annCF.map(v=>v>=0?'rgba(26,63,122,.65)':'rgba(176,42,42,.65)'),borderRadius:3
+  }]},options:opts});
+}
+
+// ══════════════════════════════════════════════
+// GESTIONE DATI — BACKUP / RESTORE / CSV / DEMO
+// ══════════════════════════════════════════════
+function setStatus(t){
+  const e=document.getElementById('tools-status');
+  if(!e)return;
+  e.textContent=t;
+  clearTimeout(window._st);
+  window._st=setTimeout(()=>{e.textContent='';},5000);
+}
+
+function allNxData(){
+  const o={};
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i);
+    if(k && k.startsWith('nx_')) o[k]=localStorage.getItem(k);
+  }
+  return o;
+}
+
+function backupData(){
+  const payload={_meta:{app:'Nexcorp Cruscotto',exported:new Date().toISOString()},data:allNxData()};
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='nexcorp_backup_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  setStatus('✓ Backup scaricato');
+}
+
+function restoreData(input){
+  const file=input.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const j=JSON.parse(e.target.result);
+      const d=(j && j.data) ? j.data : j;
+      if(typeof d!=='object'||d===null) throw new Error('Formato non valido');
+      let n=0;
+      Object.entries(d).forEach(([k,v])=>{ if(k.startsWith('nx_')){ localStorage.setItem(k,v); n++; } });
+      DEMO = localStorage.getItem('nx_demo') !== 'off';
+      refreshDemoBtn();
+      setStatus('✓ Ripristinati '+n+' valori');
+      onPeriodChange();
+      syncPushDebounced();
+    }catch(err){ setStatus('❌ '+err.message); }
+    input.value='';
+  };
+  r.readAsText(file);
+}
+
+// CSV — campi importabili (stesse chiavi del form)
+// CSV — campi importabili: derivati da FIELDS così restano sempre allineati al form
+const CSV_KEYS=FIELDS.flatMap(s=>s.rows.map(r=>r.key));
+
+function downloadCSVTemplate(){
+  const yr=A();
+  const header=['Anno','Mese','Societa',...CSV_KEYS];
+  const lines=[header.join(',')];
+  for(let m=0;m<12;m++){
+    UNITS.forEach((u,ui)=>{
+      const cells=CSV_KEYS.map(k=>{
+        const row=FIELDS.flatMap(f=>f.rows).find(r=>r.key===k);
+        // celle non applicabili a quella società → "N/A" (verranno ignorate)
+        if(row && row.noTypes && row.noTypes.includes(TYPES[ui])) return 'N/A';
+        return '';
+      });
+      lines.push([yr,m+1,'"'+u+'"',...cells].join(','));
+    });
+  }
+  const blob=new Blob(['﻿'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='nexcorp_template_'+yr+'.csv';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  setStatus('✓ Template '+yr+' scaricato');
+}
+
+function splitCSVLine(line){
+  const out=[]; let cur=''; let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i];
+    if(q){
+      if(ch==='"'){ if(line[i+1]==='"'){cur+='"';i++;} else q=false; }
+      else cur+=ch;
+    } else {
+      if(ch===',' || ch===';'){ out.push(cur); cur=''; }
+      else if(ch==='"'){ q=true; }
+      else cur+=ch;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function parseNum(raw){
+  raw=(raw||'').replace(/[€\s]/g,'');
+  if(raw==='') return NaN;
+  if(raw.includes(',')){
+    raw=raw.replace(/\./g,'').replace(',','.');           // it: 1.234,56 -> 1234.56
+  } else if(/^-?\d{1,3}(\.\d{3})+$/.test(raw)){
+    raw=raw.replace(/\./g,'');                            // it: 5.000 / 1.234 -> migliaia
+  }
+  return parseFloat(raw);
+}
+
+function importCSV(input){
+  const file=input.files[0]; if(!file)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      let text=e.target.result.replace(/^﻿/,'');
+      const lines=text.split(/\r?\n/).filter(l=>l.trim()!=='');
+      if(lines.length<2) throw new Error('CSV vuoto');
+      const header=splitCSVLine(lines[0]).map(h=>h.trim().toLowerCase());
+      const iAnno=header.indexOf('anno'), iMese=header.indexOf('mese');
+      let iSoc=header.indexOf('societa'); if(iSoc<0) iSoc=header.indexOf('società');
+      if(iAnno<0||iMese<0||iSoc<0) throw new Error('Colonne Anno/Mese/Societa mancanti');
+      let cells=0, rows=0, skipped=0;
+      for(let li=1;li<lines.length;li++){
+        const c=splitCSVLine(lines[li]);
+        const yr=parseInt(c[iAnno]);
+        const mo=parseInt(c[iMese]);
+        const soc=(c[iSoc]||'').trim().replace(/^"|"$/g,'').toUpperCase();
+        const ui=UNITS.indexOf(soc);
+        if(!yr||!mo||mo<1||mo>12||ui<0){ skipped++; continue; }
+        const m=mo-1;
+        CSV_KEYS.forEach(k=>{
+          const ci=header.indexOf(k);
+          if(ci<0) return;
+          const v=parseNum(c[ci]);
+          if(isNaN(v)) return; // celle vuote o N/A vengono ignorate
+          localStorage.setItem(`nx_${yr}_${m}_${k}_${ui}`, Math.round(v));
+          cells++;
+        });
+        rows++;
+      }
+      if(cells>0 && DEMO){ DEMO=false; localStorage.setItem('nx_demo','off'); refreshDemoBtn(); }
+      setStatus('✓ Importate '+cells+' celle ('+rows+' righe'+(skipped?', '+skipped+' ignorate':'')+')');
+      onPeriodChange();
+      syncPushDebounced();
+    }catch(err){ setStatus('❌ '+err.message); }
+    input.value='';
+  };
+  r.readAsText(file);
+}
+
+// DEMO TOGGLE
+function refreshDemoBtn(){
+  const b=document.getElementById('demo-btn'); if(!b)return;
+  b.textContent = DEMO ? '◐ Dati demo: ON' : '○ Dati demo: OFF';
+  b.style.background = DEMO ? 'var(--amber)' : 'var(--text3)';
+  b.style.color='#fff';
+}
+function toggleDemo(){
+  DEMO=!DEMO;
+  localStorage.setItem('nx_demo', DEMO?'on':'off');
+  refreshDemoBtn();
+  setStatus(DEMO?'Dati demo attivi (celle vuote = esempio)':'Dati demo OFF — celle vuote = 0');
+  onPeriodChange();
+}
+
+// ══════════════════════════════════════════════
+// DETTAGLIO FORNITORI — verifica per voce di costo
+// ══════════════════════════════════════════════
+function detCats(){
+  const out=[];
+  FIELDS.forEach(s=>{ if(/^COSTI/.test(s.sec)) s.rows.forEach(r=>out.push({key:r.key,lbl:r.lbl})); });
+  return out;
+}
+function initDet(){
+  const soc=document.getElementById('det-soc');
+  if(soc && soc.options.length!==UNITS.length) soc.innerHTML=UNITS.map((u,i)=>`<option value="${i}">${u}</option>`).join('');
+  const cat=document.getElementById('det-cat');
+  if(cat && !cat.options.length) cat.innerHTML=detCats().map(c=>`<option value="${c.key}">${c.lbl}</option>`).join('');
+}
+const DETK=(a,m,cat,soc)=>`nx_det_${a}_${m}_${cat}_${soc}`;
+function detSel(){ return {soc:parseInt(document.getElementById('det-soc').value)||0, cat:document.getElementById('det-cat').value}; }
+function detLoadFor(a,m,cat,soc){ try{ return JSON.parse(localStorage.getItem(DETK(a,m,cat,soc))||'[]'); }catch(e){ return []; } }
+function detLoad(){ const {soc,cat}=detSel(); return detLoadFor(A(),M(),cat,soc); }
+function detStore(rows){ const {soc,cat}=detSel(); localStorage.setItem(DETK(A(),M(),cat,soc), JSON.stringify(rows)); }
+function detAddRow(){ const r=detLoad(); r.push({n:'',v:0}); detStore(r); renderDet(); }
+function detDel(i){ const r=detLoad(); r.splice(i,1); detStore(r); renderDet(); }
+function detEdit(i,field,val){ const r=detLoad(); if(!r[i])return; if(field==='n') r[i].n=val; else r[i].v=parseFloat(val)||0; detStore(r); detSummary(); }
+function renderDet(){
+  initDet();
+  const rows=detLoad();
+  const el=document.getElementById('det-rows'); if(!el)return;
+  if(!rows.length){
+    el.innerHTML='<div style="font-size:12px;color:var(--text3)">Nessun fornitore inserito. Clicca “+ Fornitore”.</div>';
+  } else {
+    el.innerHTML=`<table class="form-table" style="width:100%"><thead><tr><th>Fornitore</th><th style="width:140px">Importo €</th><th style="width:36px"></th></tr></thead><tbody>`+
+      rows.map((r,i)=>`<tr>
+        <td style="padding:0"><input value="${(r.n||'').replace(/"/g,'&quot;')}" oninput="detEdit(${i},'n',this.value)" placeholder="Nome fornitore" style="width:100%;height:38px;border:none;border-right:1px solid var(--border);padding:0 8px;font-size:13px;background:var(--surface);outline:none"></td>
+        <td style="padding:0"><input type="number" min="0" step="1" value="${Math.round(r.v||0)}" oninput="detEdit(${i},'v',this.value)" class="num-in"></td>
+        <td style="text-align:center"><span onclick="detDel(${i})" title="Elimina" style="cursor:pointer;color:var(--red);font-size:18px;font-weight:600">×</span></td>
+      </tr>`).join('')+`</tbody></table>`;
+  }
+  detSummary();
+}
+function detSummary(){
+  const {soc,cat}=detSel();
+  const sum=detLoad().reduce((s,r)=>s+(parseFloat(r.v)||0),0);
+  const tot=lv(A(),M(),cat,soc);
+  const diff=sum-tot, ok=Math.abs(diff)<0.5;
+  const el=document.getElementById('det-summary'); if(!el)return;
+  el.innerHTML=`<div style="display:flex;gap:16px;flex-wrap:wrap;align-items:center;font-size:13px">
+      <span>Somma dettaglio: <strong>${eu(sum)}</strong></span>
+      <span style="color:var(--text3)">Totale nel form: <strong>${eu(tot)}</strong></span>
+      <span style="color:${ok?'var(--green)':'var(--amber)'};font-weight:600">${ok?'✓ Coincide':'Δ '+eu(diff)}</span>
+      <button class="save-btn" style="font-size:12px;padding:5px 12px;background:var(--blue)" onclick="detApply()">Usa somma come totale</button>
+    </div>`;
+}
+function detApply(){
+  const {soc,cat}=detSel();
+  const sum=Math.round(detLoad().reduce((s,r)=>s+(parseFloat(r.v)||0),0));
+  sv(A(),M(),cat,soc,sum);
+  renderForm(); renderDet(); renderRiepilogo();
+  setStatus('✓ Totale aggiornato da dettaglio');
+  syncPushDebounced();
+}
+
+// ══════════════════════════════════════════════
+// SINCRONIZZAZIONE CLOUD (Google Sheet via Apps Script)
+// ══════════════════════════════════════════════
+let SYNC_URL   = localStorage.getItem('nx_sync_url')||'';
+let SYNC_TOKEN = localStorage.getItem('nx_sync_token')||'';
+let SYNC_AUTO  = localStorage.getItem('nx_sync_auto')==='1';
+let _syncTimer=null, _syncing=false;
+
+function syncStatus(msg,color){
+  const a=document.getElementById('sync-status'); if(a){ a.textContent=msg||''; a.style.color=color||'var(--text2)'; }
+  const b=document.getElementById('sync-badge'); if(b){ b.textContent = (SYNC_URL&&msg)?('☁︎ '+msg):(SYNC_URL?'☁︎':''); }
+}
+function syncInitUI(){
+  const u=document.getElementById('sync-url'), t=document.getElementById('sync-token'), au=document.getElementById('sync-auto');
+  if(u) u.value=SYNC_URL; if(t) t.value=SYNC_TOKEN; if(au) au.checked=SYNC_AUTO;
+  syncStatus(SYNC_URL?(SYNC_AUTO?'auto':'configurato'):'');
+}
+function syncSaveConfig(){
+  SYNC_URL=(document.getElementById('sync-url').value||'').trim();
+  SYNC_TOKEN=(document.getElementById('sync-token').value||'').trim();
+  SYNC_AUTO=document.getElementById('sync-auto').checked;
+  localStorage.setItem('nx_sync_url',SYNC_URL);
+  localStorage.setItem('nx_sync_token',SYNC_TOKEN);
+  localStorage.setItem('nx_sync_auto',SYNC_AUTO?'1':'0');
+  syncStatus('config. salvata','var(--green)');
+}
+function syncYears(){ return [...document.querySelectorAll('#sel-anno option')].map(o=>parseInt(o.value)); }
+
+function syncBuildTable(){
+  const header=['Anno','Mese','Societa',...CSV_KEYS];
+  const rows=[];
+  syncYears().forEach(y=>{
+    for(let m=0;m<12;m++){
+      UNITS.forEach((u,ui)=>{
+        if(!CSV_KEYS.some(k=>localStorage.getItem(SK(y,m,k,ui))!==null)) return;
+        const vals=CSV_KEYS.map(k=>{ const s=localStorage.getItem(SK(y,m,k,ui)); return s===null?'':Number(s); });
+        rows.push([y,m+1,u,...vals]);
+      });
+    }
+  });
+  return {header,rows};
+}
+function syncApplyTable(t){
+  if(!t||!t.header||!t.rows) return 0;
+  const H=t.header, iA=H.indexOf('Anno'), iM=H.indexOf('Mese'), iS=H.indexOf('Societa');
+  if(iA<0||iM<0||iS<0) return 0;
+  let n=0;
+  t.rows.forEach(r=>{
+    const y=parseInt(r[iA]), mo=parseInt(r[iM]); const soc=String(r[iS]||'').toUpperCase();
+    const ui=UNITS.indexOf(soc); if(!y||!mo||ui<0) return; const m=mo-1;
+    CSV_KEYS.forEach(k=>{ const ci=H.indexOf(k); if(ci<0) return; const v=r[ci];
+      if(v===''||v===null||v===undefined) return; localStorage.setItem(SK(y,m,k,ui),Math.round(Number(v))); n++; });
+  });
+  return n;
+}
+function jsonp(url){
+  return new Promise((res,rej)=>{
+    const cb='nx_cb_'+Math.random().toString(36).slice(2);
+    const s=document.createElement('script');
+    const to=setTimeout(()=>{cleanup();rej(new Error('timeout'));},15000);
+    function cleanup(){ clearTimeout(to); try{delete window[cb];}catch(e){} if(s.parentNode) s.parentNode.removeChild(s); }
+    window[cb]=d=>{ cleanup(); res(d); };
+    s.onerror=()=>{ cleanup(); rej(new Error('rete')); };
+    s.src=url+(url.includes('?')?'&':'?')+'token='+encodeURIComponent(SYNC_TOKEN)+'&callback='+cb+'&_='+Date.now();
+    document.body.appendChild(s);
+  });
+}
+async function syncPull(){ const d=await jsonp(SYNC_URL); if(d.error) throw new Error(d.error); return syncApplyTable(d.table); }
+function syncPush(){ const {header,rows}=syncBuildTable();
+  return fetch(SYNC_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:SYNC_TOKEN,header,rows})}).then(()=>rows.length);
+}
+async function syncNow(){
+  if(!SYNC_URL||!SYNC_TOKEN){ syncStatus('inserisci URL+token','var(--amber)'); return; }
+  if(_syncing) return; _syncing=true; syncStatus('sync…');
+  try{
+    const remote=await syncPull();
+    if(remote===0){ await syncPush(); syncStatus('cloud inizializzato ✓','var(--green)'); }
+    else { DEMO=false; localStorage.setItem('nx_demo','off'); await syncPush(); syncStatus('sincronizzato ✓','var(--green)'); }
+    onPeriodChange();
+  }catch(e){ syncStatus('errore: '+e.message,'var(--red)'); }
+  _syncing=false;
+}
+function syncPushDebounced(){
+  if(!SYNC_URL||!SYNC_TOKEN||!SYNC_AUTO) return;
+  clearTimeout(_syncTimer); syncStatus('modifiche…','var(--amber)');
+  _syncTimer=setTimeout(()=>{ syncPush().then(()=>syncStatus('salvato nel cloud ✓','var(--green)')).catch(()=>syncStatus('errore push','var(--red)')); },1500);
+}
+async function syncOnLoad(){
+  syncInitUI();
+  if(SYNC_URL&&SYNC_TOKEN&&SYNC_AUTO){
+    _syncing=true; syncStatus('carico dal cloud…');
+    try{ const n=await syncPull(); if(n>0){ DEMO=false; localStorage.setItem('nx_demo','off'); } syncStatus('caricato ✓','var(--green)'); onPeriodChange(); }
+    catch(e){ syncStatus('offline (dati locali)','var(--amber)'); }
+    _syncing=false;
+  }
+}
+
+// ══════════════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════════════
+function go(id, el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-item,.mob-btn').forEach(n=>n.classList.remove('active'));
+  el.classList.add('active');
+  if(id==='dati')    { renderForm(); refreshDemoBtn(); renderDet(); }
+  if(id==='iva')     renderIva();
+  if(id==='ce')      renderCE();
+  if(id==='cf')      renderCF();
+  if(id==='annuale') renderAnnuale();
+}
+
+// ══════════════════════════════════════════════
+// EXPORT PDF
+// ══════════════════════════════════════════════
+function exportPDF(){
+  const period = MONTHS[M()]+' '+A();
+  const orig = document.title;
+  document.title = 'Nexcorp — '+period;
+  window.print();
+  document.title = orig;
+}
+
+// ══════════════════════════════════════════════
+// PERIOD CHANGE
+// ══════════════════════════════════════════════
+function onPeriodChange(){
+  const lbl=MONTHS[M()]+' '+A();
+  document.getElementById('tb-period').textContent=lbl;
+  document.getElementById('dati-period').textContent=lbl;
+  renderRiepilogo();
+  // re-render active page
+  const pid=document.querySelector('.page.active').id.replace('page-','');
+  if(pid==='iva')     renderIva();
+  if(pid==='ce')      renderCE();
+  if(pid==='cf')      renderCF();
+  if(pid==='annuale') renderAnnuale();
+  if(pid==='dati')    { renderForm(); renderDet(); }
+}
+
+document.getElementById('sel-anno').addEventListener('change', onPeriodChange);
+document.getElementById('sel-mese').addEventListener('change', onPeriodChange);
+const _curMonth = new Date().getMonth();
+document.getElementById('sel-mese').value = _curMonth;
+// Highlight current month
+document.querySelectorAll('#sel-mese option').forEach((o,i)=>{ if(i===_curMonth) o.classList.add('current'); });
+refreshDemoBtn();
+onPeriodChange();
+syncOnLoad();
+</script>
+</body>
+</html>
