@@ -1421,7 +1421,19 @@ function jsonp(url){
     document.body.appendChild(s);
   });
 }
-async function syncPull(){ const d=await jsonp(SYNC_URL); if(d.error) throw new Error(d.error); return syncApplyTable(d.table); }
+async function syncPull(){
+  let d=null;
+  try{
+    const u=SYNC_URL+(SYNC_URL.indexOf('?')>=0?'&':'?')+'token='+encodeURIComponent(SYNC_TOKEN)+'&_='+Date.now();
+    const r=await fetch(u,{method:'GET'});
+    d=await r.json();
+  }catch(e){
+    try{ d=await jsonp(SYNC_URL); }catch(e2){ throw new Error('lettura fallita'); }
+  }
+  if(!d) throw new Error('nessuna risposta');
+  if(d.error) throw new Error(d.error);
+  return syncApplyTable(d.table);
+}
 function syncPush(){ const {header,rows}=syncBuildTable();
   return fetch(SYNC_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({token:SYNC_TOKEN,header,rows})}).then(()=>rows.length);
 }
