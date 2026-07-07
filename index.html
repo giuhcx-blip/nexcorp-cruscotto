@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-<!-- build 2026-07-04b (EIGHT DAYS IVA 22%) -->
 <html lang="it">
 <head>
 <meta charset="UTF-8">
@@ -112,6 +111,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .data-table tr.sub-green td{background:var(--green-bg);font-weight:600}
 .data-table tr.sub-red td{background:var(--red-bg);font-weight:600}
 .data-table tr.sub-blue td{background:var(--blue-bg);font-weight:600}
+.data-table tr.sub-invest td{background:#efe7d6;font-weight:700;color:#7a5c12}
+.data-table tr.sep td{background:transparent;color:#8a8a8a;font-style:italic;font-size:.85em;padding-top:14px;border:none}
 .data-table tr.total td{background:var(--text);color:#fff;font-weight:600}
 
 /* PILL */
@@ -307,7 +308,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
     <strong>Note fiscali:</strong><br>
     WINGSUP → regime speciale del margine (art. 74-ter DPR 633/72) — IVA non esposta in fattura<br>
     EIGHT DAYS → prestazioni estetiche — IVA 22% (imponibili)<br>
-    LUNGARNO → regime IVA da confermare col commercialista (esenzione o opzione 22%)
+    LUNGARNO → locazione a ORIENTAL (opzione IVA 22%) — canone € 1.650/mese + IVA
   </div>
   <div class="uf-bar" id="uf-iva"></div>
   <div class="chart-wrap" style="overflow-x:auto"><table class="data-table" id="iva-table"></table></div>
@@ -384,7 +385,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 
 <script>
 // ══════════════════════════════════════════════
-// (versione online) nessun dato nel sorgente — i dati arrivano dal Google Sheet
+// SEED — DATI REALI ORIENTAL 2026 (gen–giu)
+// Fonti: Registro corrispettivi Tilby + Fatture elettroniche ricevute.
+// Si esegue una sola volta (flag nx_seed_oriental_2026). Giu = parziale al 25/06.
+// Costo personale NON incluso (assente nei file). IVA acquisti da inserire a parte.
 // ══════════════════════════════════════════════
 (function(){ if(localStorage.getItem('nx_demo')===null) localStorage.setItem('nx_demo','off'); })();
 
@@ -392,7 +396,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 // CONFIG
 // ══════════════════════════════════════════════
 const UNITS  = ['ORIENTAL','FLY FOR FOOD','ARIA','LUNGARNO','WINGSUP','EIGHT DAYS'];
-const TYPES  = ['bar','bar','bar','immob','travel','bar']; // immob = immobiliare · EIGHT DAYS = estetica IVA 22%
+const TYPES  = ['bar','bar','bar','bar','travel','bar']; // LUNGARNO = locazione IVA 22% · EIGHT DAYS = estetica IVA 22%
 const MONTHS = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
 
 // def[] allineati a UNITS: [ORIENTAL, FLY FOR FOOD, ARIA, LUNGARNO, WINGSUP, EIGHT DAYS]
@@ -409,7 +413,8 @@ const FIELDS = [
     { key:'spedizioni',lbl:'Spedizioni / trasporti',           note:'Corrieri, logistica',           def:[0,0,0,0,0,0] },
   ]},
   { sec:'COSTI FISSI — non variano col fatturato', rows:[
-    { key:'personale', lbl:'Costo personale (lordo)',          note:'Stipendi + contributi',         def:[4500,4500,3000,0,3500,18000] },
+    { key:'personale', lbl:'Stipendi (netti/lordi)',           note:'Solo stipendi dipendenti',      def:[4500,4500,3000,0,3500,18000] },
+    { key:'contributi',lbl:'Contributi / F24 (INPS)',          note:'Contributi previdenziali, F24', def:[0,0,0,0,0,0] },
     { key:'affitti',   lbl:'Affitti e locazioni',              note:'',        def:[1200,1200,1200,0,2000,3000] },
     { key:'condominio',lbl:'Condominio / spese stabile',       note:'Incl. acqua se in condominio',   def:[0,0,0,0,0,0] },
     { key:'alloggi',   lbl:'Alloggi dipendenti',               note:'Affitti casa personale',         def:[0,0,0,0,0,0] },
@@ -423,6 +428,9 @@ const FIELDS = [
   { sec:'COSTI FINANZIARI — sotto il MOL (non incidono sul MOL)', rows:[
     { key:'finanziam', lbl:'Rate finanziamenti / prestiti',     note:'Quota capitale + interessi',  def:[0,0,0,0,0,0] },
     { key:'interessi', lbl:'Interessi e oneri bancari',         note:'',                            def:[0,0,0,0,0,0] },
+  ]},
+  { sec:'INVESTIMENTI — immobilizzazioni (NON incidono sul risultato/MOL)', rows:[
+    { key:'investimenti', lbl:'Investimenti / Immobilizzazioni', note:'Ristrutturazioni, arredi, beni durevoli. È un investimento (bene), non un costo di gestione.', def:[0,0,0,0,0,0] },
   ]},
   { sec:'IVA', rows:[
     { key:'iva10',  lbl:'IVA vendite 10%',         note:'Solo bar',        def:[500,480,420,0,0,0],  noTypes:['immob','travel','clinic'] },
@@ -524,7 +532,7 @@ function get(k,i){ return lv(A(),M(),k,i); }
 
 // Chiavi di costo — UNICA fonte di verità (usate ovunque per coerenza mensile/annuale)
 const COST_VAR_KEYS = ['materie','materie_nf','fornitori','spedizioni'];                               // variabili
-const COST_FIX_KEYS = ['personale','affitti','condominio','alloggi','utenze','contabili','manutenzioni','assicurazioni','marketing','altri']; // fissi
+const COST_FIX_KEYS = ['personale','contributi','affitti','condominio','alloggi','utenze','contabili','manutenzioni','assicurazioni','marketing','altri']; // fissi
 const FIN_KEYS      = ['finanziam','interessi'];
 function sumKeys(a,m,i,keys){ return keys.reduce((s,k)=>s+lv(a,m,k,i),0); }
 function costiVarAM(a,m,i){ return sumKeys(a,m,i,COST_VAR_KEYS); }
@@ -539,6 +547,12 @@ function margineCtr(i){ return ricavi(i)-costiVar(i); }          // margine di c
 function mol(i){ return margineCtr(i)-costiFissi(i); }           // = ricavi - costi totali
 function finanz(i){ return sumKeys(A(),M(),i,FIN_KEYS); }        // costi finanziari (sotto il MOL)
 function risNetto(i){ return mol(i)-finanz(i); }                 // risultato dopo gestione finanziaria
+function investim(i){ return get('investimenti',i); }            // investimenti/immobilizzazioni del mese (fuori dal MOL)
+function investCum(i){ // totale investito a oggi (cumulato tutti gli anni fino al mese corrente)
+  let s=0, yr=A(), mo=M();
+  for(let y=2020;y<=yr;y++){ for(let m=0;m<12;m++){ if(y===yr && m>mo) break; s+=lv(y,m,'investimenti',i); } }
+  return s;
+}
 function ivaDeb(i){ return TYPES[i]==='bar' ? get('iva10',i)+get('iva22',i) : 0; }
 function ivaCred(i){ return TYPES[i]==='travel' ? 0 : get('ivaacq',i); }
 function ivaSaldo(i){ return ivaDeb(i)-ivaCred(i); }
@@ -856,13 +870,16 @@ function renderCE(){
   const tr=idx.reduce((s,i)=>s+ricavi(i),0), tcv=idx.reduce((s,i)=>s+costiVar(i),0), tcf=idx.reduce((s,i)=>s+costiFissi(i),0);
   const tmc=idx.reduce((s,i)=>s+margineCtr(i),0), tm=idx.reduce((s,i)=>s+mol(i),0);
   const tfin=idx.reduce((s,i)=>s+finanz(i),0), trn=idx.reduce((s,i)=>s+risNetto(i),0);
+  const tinv=idx.reduce((s,i)=>s+investim(i),0), tinvc=idx.reduce((s,i)=>s+investCum(i),0);
   const label=isAll?'consolidati':UNITS[ufCE];
-  document.getElementById('kpi-ce').innerHTML=[
+  const kpiCards=[
     {l:'Ricavi '+label,           v:eu(tr),c:'pos'},
     {l:'Margine di contribuzione',v:eu(tmc),c:tmc>=0?'pos':'neg', s:tr>0?pc(tmc/tr)+' dei ricavi':''},
     {l:'MOL / EBITDA',            v:eu(tm),c:tm>=0?'pos':'neg', s:tr>0?pc(tm/tr):''},
     {l:'Risultato netto',         v:eu(trn),c:trn>=0?'pos':'neg', s:tfin>0?'dopo €'+Math.round(tfin).toLocaleString('it-IT')+' fin.':''},
-  ].map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div>${k.s?'<div class="kpi-sub">'+k.s+'</div>':''}</div>`).join('');
+  ];
+  if(tinvc>0) kpiCards.push({l:'Investito a oggi',v:eu(tinvc),c:'', s:tinv>0?'+€'+Math.round(tinv).toLocaleString('it-IT')+' nel mese':'immobilizzazioni'});
+  document.getElementById('kpi-ce').innerHTML=kpiCards.map(k=>`<div class="kpi"><div class="kpi-lbl">${k.l}</div><div class="kpi-val ${k.c}">${k.v}</div>${k.s?'<div class="kpi-sub">'+k.s+'</div>':''}</div>`).join('');
 
   const ceRows=[
     {l:'Corrispettivi / canoni / fatturato', vals:idx.map(i=>lv(A(),M(),'corrisp',i)),          cls:''},
@@ -878,11 +895,16 @@ function renderCE(){
     {l:'− Costi finanziari (rate, interessi)', vals:idx.map(i=>finanz(i)),                       cls:'sub-red'},
     {l:'= Risultato netto di gestione',      vals:idx.map(i=>risNetto(i)),                       cls:'sub-blue'},
   ];
+  if(tinvc>0){
+    ceRows.push({l:'· · · Investimenti (immobilizzazioni) — fuori dal risultato · · ·', vals:idx.map(()=>null), cls:'sep', skipTot:true});
+    ceRows.push({l:'Investimenti del mese',        vals:idx.map(i=>investim(i)),  cls:''});
+    ceRows.push({l:'Investito cumulato a oggi',    vals:idx.map(i=>investCum(i)), cls:'sub-invest'});
+  }
   const colLabels=idx.map(i=>UNITS[i]);
   const th=`<thead><tr><th>Voce</th>${colLabels.map(u=>`<th>${u}</th>`).join('')}${isAll?'<th>Totale</th>':''}</tr></thead>`;
   const tb='<tbody>'+ceRows.map(row=>{
-    const tds=row.vals.map(v=>`<td>${row.pct?pc(v):eu(v)}</td>`).join('');
-    const tot=row.pct?pc(tr>0?tm/tr:0):eu(row.vals.reduce((s,v)=>s+v,0));
+    const tds=row.vals.map(v=>`<td>${v===null?'':(row.pct?pc(v):eu(v))}</td>`).join('');
+    const tot=row.skipTot?'':(row.pct?pc(tr>0?tm/tr:0):eu(row.vals.reduce((s,v)=>s+(v||0),0)));
     return`<tr class="${row.cls}"><td>${row.l}</td>${tds}${isAll?`<td><strong>${tot}</strong></td>`:''}</tr>`;
   }).join('')+'</tbody>';
   document.getElementById('ce-table').innerHTML=th+tb;
@@ -902,7 +924,7 @@ function renderCE(){
   } else {
     const i=ufCE;
     const ckeys=[...COST_VAR_KEYS,...COST_FIX_KEYS];
-    const KL={materie:'Mat.cf',materie_nf:'Mat.sf',fornitori:'Provvig.',spedizioni:'Spediz.',personale:'Personale',affitti:'Affitti',condominio:'Condom.',alloggi:'Alloggi',utenze:'Utenze',contabili:'Consul.',manutenzioni:'Manut.',assicurazioni:'Assicur.',marketing:'Mktg',altri:'Altri'};
+    const KL={materie:'Mat.cf',materie_nf:'Mat.sf',fornitori:'Provvig.',spedizioni:'Spediz.',personale:'Stipendi',contributi:'Contrib.',affitti:'Affitti',condominio:'Condom.',alloggi:'Alloggi',utenze:'Utenze',contabili:'Consul.',manutenzioni:'Manut.',assicurazioni:'Assicur.',marketing:'Mktg',altri:'Altri'};
     const ceLabels=[...ckeys.map(k=>KL[k]||k),'Costi tot.','Ricavi','MOL'];
     const ceData=[...ckeys.map(k=>get(k,i)),costiTot(i),ricavi(i),mol(i)];
     const ceBg=[...ckeys.map(()=>'rgba(176,42,42,.45)'),'rgba(176,42,42,.7)','rgba(26,107,69,.7)',mol(i)>=0?'rgba(26,63,122,.7)':'rgba(176,42,42,.9)'];
